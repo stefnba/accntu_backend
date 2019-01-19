@@ -5,6 +5,8 @@ from django.db import models
 
 
 
+
+
 class Transaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     # account = models.ForeignKey(Accounts, on_delete=models.SET_NULL, blank=True, null=True)
