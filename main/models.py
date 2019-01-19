@@ -38,3 +38,6 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ['date', 'created_at']
+
+    def __str__(self):
+        return self.name
