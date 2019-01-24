@@ -19,9 +19,9 @@ from django.conf.urls.static import static
 from django.urls import include, path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-
-    path('', include('main.urls', namespace='main',)),
+    path('admin/', admin.site.urls),    # admin
+    path('', include('main.urls', namespace='main',)),  # main app
+    path('auth/', include('oauth2_provider.urls', namespace='oauth2_provider')) # oauth2
 ]
 
 if settings.DEBUG:
