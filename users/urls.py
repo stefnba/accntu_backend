@@ -1,8 +1,8 @@
 from django.urls import path
 
 from .views import (
-    TransactionList,
-
+    Me,
+    MeFull,
     Test
 )
 
@@ -11,10 +11,9 @@ app_name = "main"
 
 urlpatterns = [
 
-    # Transactions
-    path('transactions/', TransactionList.as_view(), name='transaction-list'),
-
-
+    # My user
+    path('me/', Me.as_view(), name='user-me'),
+    path('me/full/', MeFull.as_view(), name='user-me'),
     
     # Test
     path('test/', Test.as_view(), name='test'),

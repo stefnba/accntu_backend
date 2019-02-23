@@ -1,14 +1,14 @@
 from rest_framework import serializers
 
 from .models import (
-    Transaction,
+    FileUpload,
 )
 
 """
     Transaction
 """""""""""""""""""""""""""""""""""""""""""""
 
-class TransactionListSerializer(serializers.ModelSerializer):
+class UploadSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Transaction
-        fields = '__all__'
+        model = FileUpload
+        fields = ('account', 'upload_file', )

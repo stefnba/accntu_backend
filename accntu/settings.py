@@ -39,7 +39,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'accounts',
+    'import_transaction',
     'main',
+    'users',
 
     'oauth2_provider', #added
     'rest_framework', # added
@@ -150,12 +153,17 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        #'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.IsAuthenticated',
     ),
 }
 
+# OAUTH2 config
+OAUTH2_PROVIDER = {
+    # 'ACCESS_TOKEN_EXPIRE_SECONDS': 330
+}
 
 # CORS whitelist host for preflight error
 CORS_ORIGIN_WHITELIST = (
     'localhost:3000',
+    'http://localhost:3000'
 )
