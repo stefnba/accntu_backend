@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'accounts',
     'import_transaction',
     'main',
+    'transactions',
     'users',
 
     'oauth2_provider', #added

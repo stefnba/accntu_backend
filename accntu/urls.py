@@ -24,9 +24,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),    # admin
     path('auth/', include('oauth2_provider.urls', namespace='oauth2_provider')), # oauth2
     path('import/', include('import_transaction.urls', namespace='import_transaction',)),
-    
+    path('transactions/', include('transactions.urls', namespace='transactions',)),
     path('users/', include('users.urls', namespace='users',)),  # users app
-   
 ]
 
 if settings.DEBUG:

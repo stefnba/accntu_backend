@@ -1,11 +1,17 @@
 from django.http import HttpResponse, HttpResponseServerError
 from django.shortcuts import render
+from rest_framework.generics import ListCreateAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 
-from .serializers import UploadSerializer
+from .models import ImportUpload
+
+from .serializers import (
+    ImportSerializer,
+    UploadSerializer
+)
 from .utils.upload import ReadFromFile
 
 # Create your views here.
@@ -31,22 +37,43 @@ class Upload(APIView):
 
             read_file = ReadFromFile(file_request, account)
             if read_file.is_valid():
-                return Response(read_file.get_data(), status=status.HTTP_201_CREATED)
+                return Response(read_file.get_data(), status=status.HTTP_200_OK)
             
             return Response(read_file.get_error(), status=status.HTTP_400_BAD_REQUEST)
         return Response(False)
 
+class Import(ListCreateAPIView):
 
-        # import_transactions = ProcessImport(request)
-        # if import_transactions.is_valid():
-        #     import_key = import_transactions.get_hash_name()
-        #     return HttpResponse(import_key)
-        # else:
-        #     return HttpResponseServerError()
+    def create(self, request, *args, **kwargs):
 
+        transactions = request.data
+        user = request.user.id
 
-    # def get(self, request, format=None):
-    #     return Response({'dd': 122}, status=status.HTTP_201_CREATED)
+        serializer = ImportSerializer(data=transactions, many=True, context={'request': request})
+        
+        # print(serializer.initial_data)
+        if serializer.is_valid():
+            
+            # save import to db
+            account = serializer.validated_data[0]['account']
+            import_record = ImportUpload.objects.create(
+                user_id=user,
+                account=account
+            )
+
+            serializer.save(
+                user_id=user,
+                import_upload_id=import_record.id
+            )
+
+            return Response(True, status=status.HTTP_200_OK)
+        else:
+            print('not valid')
+            # print(serializer.data)
+            print(serializer.errors)
+
+    
+        return Response(True, status=status.HTTP_200_OK)
 
 
 

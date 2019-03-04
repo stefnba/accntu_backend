@@ -1,10 +1,10 @@
 from django.urls import path
 
-from .views import (
-    TransactionList,
+# from .views import (
+#     # TransactionList,
 
-    Test
-)
+#     # Test
+# )
 
 app_name = "main"
 
@@ -12,10 +12,10 @@ app_name = "main"
 urlpatterns = [
 
     # Transactions
-    path('transactions/', TransactionList.as_view(), name='transaction-list'),
+    # path('transactions/', TransactionList.as_view(), name='transaction-list'),
 
 
     
     # Test
-    path('test/', Test.as_view(), name='test'),
+    # path('test/', Test.as_view(), name='test'),
 ]

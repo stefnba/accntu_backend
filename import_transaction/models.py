@@ -40,7 +40,7 @@ class FileUpload(models.Model):
         ordering = ['uploaded_at',]
 
     def __str__(self):
-        return self.upload_file
+        return self.upload_file.name
 
 class ImportUpload(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
