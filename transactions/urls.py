@@ -8,5 +8,5 @@ app_name = "transactions"
 
 
 urlpatterns = [
-    path('', TransactionList.as_view(), name='transaction-list'),
+    path('transactions/', TransactionList.as_view(), name='transaction-list'),
 ]
