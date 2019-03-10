@@ -1,30 +1,107 @@
-from accounts.models import Account
-from transactions.models import Transaction
-
-import csv
 import hashlib
 import json
 
 from datetime import datetime
 from decimal import Decimal
-from io import StringIO
+
+from accounts.models import Account
+from transactions.models import Transaction
+from .import_errors import ERORRS
+from .read_csv import ReadCSV
+from .process_transactions import ProcessTransactions
 
 
+
+
+""" 
+    Parent class that handles the entire extraction process and return ...
+    list of all transaction back to view "
+    
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+class ExtractTransactions(object):
+
+    def __init__(self, csv_file=None, account=None):
+        self.account = account
+        self.errors = []
+        self.transactions = []
+        self.transaction_attribute_cache = []
+
+        if csv_file is not None and account is not None:
+            csv = ReadCSV(csv_file)
+            if csv.is_valid():
+                
+                # get account dict
+                accout_info = Account.objects.get(id=self.account)
+                
+                # get csv content
+                csv_content = csv.get_content()
+                
+                # process csv content with account mapping info
+                self.transactions = ProcessTransactions.transactions(csv_content, accout_info)
+            
+            else: 
+                csv_errors = csv.get_errors()
+                self.errors.append(csv_errors)
+    
+
+
+    def is_valid(self):
+        " check if entire process has no errors "
+
+        has_errors = len(self.errors) > 0
+
+        if has_errors:
+            return False
+
+        return True
+
+
+
+    def get_data(self):
+        " return data to send to client "
+        
+        return self.transactions 
+
+    
+
+    def get_errors(self):
+            return self.errors[0]
+
+
+
+    def throw_error(self, err):
+        try:
+            error = ERORRS[err]
+            self.errors.append(error)
+        except:
+            print('no error code found')
+        
+        # if error was report, always return False
+        return False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"------------------------------------ OLD ------------------------------------"
 
 class ReadFromFile(object):
     
-    ERORRS = {
-        'FILE_SIZE': {
-            'error': 'FILE_SIZE',
-            'code': '001',
-            'message': 'The file is too large'
-        },
-        'FILE_TYPE': {
-            'error': 'FILE_TYPE',
-            'code': '002',
-            'message': 'The file must be of type .csv'
-        }
-    }
+    
     
     
     def __init__(self, file=None, account=None):
@@ -44,69 +121,7 @@ class ReadFromFile(object):
     
     
 
-    def check_file(self, file):
-        
-        max_size = 10 # in MB
-        allowed_endings = ('.csv', '.CSV')
-        allowed_content_type = 'text/csv'
-
-        name = file.name
-        content_type = file.content_type
-        size = file.size
-
-        # check for errors
-        if size > max_size * 1000000:
-            return self.throw_error('FILE_SIZE')
-
-        if not name.endswith(allowed_endings) or not content_type == allowed_content_type:
-            return self.throw_error('FILE_TYPE')
-        
-        # if no error
-        return True
-
-
-
-    def is_valid(self):
-        print(self.errors)
-        has_errors = len(self.errors) > 0
-
-        if has_errors:
-            return False
-
-        return True
-
-
-
-    def get_data(self):
-        " return data based on mapping and extraction of csv "
-        
-        return self.transactions
-
-
-
-    def read_csv(self, csv_file):
-        " Read content of csv "
-        
-        csv_file.seek(0)
-        content = StringIO(csv_file.read().decode('utf-8', errors='ignore'))
-        
-        return csv.DictReader(content, delimiter=';')
-        
-
-
-    def throw_error(self, err):
-        try:
-            error = self.ERORRS[err]
-            self.errors.append(error)
-        except:
-            print('no error code found')
-        
-        return False
-
-
-
-    def get_error(self):
-            return self.errors[0]
+    
 
     " ======================================================= "
 
@@ -120,8 +135,7 @@ class ReadFromFile(object):
         for index, transaction_row_in_csv in enumerate(csv_file_content, start=1): 
             transaction = self.populate_transaction_from_csv_row(transaction_row_in_csv, account_mapping_dict)
 
-            # set key (necessary for react list rendering)
-            transaction['key'] = index
+            
 
             # set account
             transaction['account'] = self.account
@@ -261,47 +275,8 @@ class ReadFromFile(object):
 
 
 
-    def clean_amount_field(self, field_value, column, key_used):
-        " removes negative sign from numbers, replaces decimal and thousand sep. and converts to float value "
-        
-        confiq = self.account_confiq
-
-        cleaned_value = field_value
-
-        # remove thousand sep
-        thou = confiq.get('thousand_sep', None)
-        if thou is not None:
-            cleaned_value = cleaned_value.replace(thou, '')
-
-        # replace decimal sep
-        if confiq['decimal_sep'] == ',':
-            cleaned_value = cleaned_value.replace(',', '.')
-
-        # clean negative sign 
-        if confiq['has_negativesign']:
-            if '-' in field_value:
-                cleaned_value = cleaned_value.replace('-', '')
-
-                # set cache to status negative, i.e. debit
-                self.transaction_cache.append({'status': 'debit'})
-
-            if '-' not in field_value:
-                # set cache to status positive, i.e. credit
-                self.transaction_cache.append({'status': 'credit'})
-        else: 
-            if key_used == 'column':
-                self.transaction_cache.append({'status': 'debit'})
-            if key_used == 'secondary_column':
-                self.transaction_cache.append({'status': 'credit'})
-        
-        # return cleaned_value
-        return float(cleaned_value)
-
-
-
     def clean_date_field(self, field_value, column, key_used):
-        date_format = column.get('format', '%d.%m.%y')
-        date = datetime.strptime(field_value, date_format).date()
+        
 
         # set weekday for date
         days = [
@@ -310,10 +285,13 @@ class ReadFromFile(object):
             'Sun',
         ]
 
+        # get day
+        date_format = column.get('format', '%d.%m.%y')
+        date = datetime.strptime(field_value, date_format).date()
+
+        # weekday
         day = date.weekday()
-
         self.transaction_cache.append({'day': days[day]})
-
 
         return date.__str__()
 

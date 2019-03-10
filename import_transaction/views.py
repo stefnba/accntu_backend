@@ -12,7 +12,7 @@ from .serializers import (
     ImportSerializer,
     UploadSerializer
 )
-from .utils.upload import ReadFromFile
+from .utils.upload import ExtractTransactions
 
 # Create your views here.
 import csv
@@ -20,27 +20,50 @@ from io import TextIOWrapper
 
 import json
 
+
+
+
+
+
+
+""" 
+    Upload file and extract all transactions
+    
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 class Upload(APIView):
 
     parser_classes = (MultiPartParser, FormParser,)
 
     def post(self, request, format=None):
         serializer = UploadSerializer(data=request.data)
+
+        # upload file
         if serializer.is_valid():
-            serializer.save(
-                user_id=request.user.id
-            )
+            serializer.save(user_id=request.user.id)
 
             # read .csv file
             file_request = request.FILES['upload_file']
             account = request.POST.get('account')
 
-            read_file = ReadFromFile(file_request, account)
+            # extract transactions from file
+            read_file = ExtractTransactions(file_request, account)
+
             if read_file.is_valid():
                 return Response(read_file.get_data(), status=status.HTTP_200_OK)
             
-            return Response(read_file.get_error(), status=status.HTTP_400_BAD_REQUEST)
+            return Response(read_file.get_errors(), status=status.HTTP_400_BAD_REQUEST)
+       
+       
+        # return in case upload file serializer return false
         return Response(False)
+
+
+
+""" 
+    Save transactions to database
+    
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 class Import(ListCreateAPIView):
 
@@ -77,9 +100,10 @@ class Import(ListCreateAPIView):
 
 
 
-"""
+""" 
     Test
-"""""""""""""""""""""""""""""""""""""""""""""
+    
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 class Test(APIView):
     def get(self, request):
