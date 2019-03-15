@@ -42,7 +42,6 @@ class ProcessTransactions(object):
                     transaction[key] = value
             self.meta_cache = []
             
-
             self.transaction_list.append(transaction)
 
         return self.transaction_list  
@@ -74,54 +73,131 @@ class ProcessTransactions(object):
                 map_info_of_field = account_mapping.get(field, None)
                 
                 # error if required field is missing
-                if map_info_of_field is None:
+                required = DB_FIELDS[field].get('mandatory', True)
+                if map_info_of_field is None and required:
                     print('ERROR: Field', field, 'is missing')
                     return self.throw_error('FIELD_MISSING')
                 
+                # skip to next if field is missing but not required
+                if map_info_of_field is None and not required:
+                    continue
+
                 # extract content of column
                 row_container[field] = self.extract_field(field, map_info_of_field, csv_row)
 
-                print(row_container)
         return row_container
         
 
     def extract_field(self, field, map_info_of_field, csv_row):
         """
-
+            Gathers all column attributes, e.g. column, column_secondary, into [{ }]
+            Then calls set_field_value()
         """
 
         column_options_for_field = DB_FIELDS[field].get('options', None)
         field_type = DB_FIELDS[field].get('type', None)
+        map_info_multiple = DB_FIELDS[field].get('multiple', False)
 
-        # return if None
+        # return if options equals None
         if column_options_for_field is None and field_type is None:
+            print('List not allowed for field')
             return None
 
-        column_options = {column_option: map_info_of_field.get(column_option, None) 
-            for column_option in column_options_for_field}
+        # return if map_info is list but no multiple allowed for field
+        if isinstance(map_info_of_field, list) and not map_info_multiple:
+            return None
+
+        # populate dict with all column attributes
+        # e.g. column, column_second, default, etc.        
+        # depending on if list or just string
+        if isinstance(map_info_of_field, list):
+            field_attrs = [
+                {
+                    field_attr: map_item.get(field_attr, None)
+                        for field_attr in column_options_for_field
+                } for map_item in map_info_of_field
+            ]
         
-        return getattr(self, 'get_content_' + field_type)(
-            field, 
-            column_options,
-            csv_row
-        )
+        else:
+            field_attrs = [{
+                field_attr: map_info_of_field.get(field_attr, None) 
+                    for field_attr in column_options_for_field
+            }]
+
+        return self.set_field_value(csv_row, field_attrs, field_type)
+
+
+    def set_field_value(self, csv_row, field_attrs, field_type):
+        """
+
+        """
+
+        field_value = []
+        attrs_is_list = len(field_attrs) > 1
+
+        for index, field_attr in enumerate(field_attrs):
+
+            # add additional parameters to field_attr
+            field_attr['index'] = index
+            field_attr['field_value'] = field_value
+            
+            # TODO regex
+            regex = csv_row.get(field_attr['column'], None)
+            value = regex
+
+            # use secondary column if value of column is ''
+            if value is not None and value is '':
+                value = csv_row.get(field_attr['column_secondary'], None)
+
+            # use default if value of secondary column is also '' (or none)
+            if value is None or value is '':
+                value = field_attr['default']
+
+            # clean value
+            cleaned_value = getattr(self, 'clean_' + field_type)(
+                value, 
+                csv_row,
+                field_attr
+            )
+
+            if isinstance(cleaned_value, list):
+                # many text field returns list, thus extend
+                field_value.extend(cleaned_value)
+            else:
+                # append value to field_value list
+                field_value.append(cleaned_value)
+                
+
+        """
+            Define finale value based on field_value
+            Either convert list to string if only one value, 
+            or join list items to string
+        """
+
+        if not attrs_is_list:
+            final_value = field_value[0]
+        else:
+            final_value = ''.join(filter(None, field_value))
+
+        # if value is None, then return None
+        if final_value is None:
+            return None
+
+        # return final value
+        return final_value
 
     
-    def get_content_amount_field(self, field, column_options, csv_row):        
+    def clean_amount_field(self, value, csv_row, field_attr):
         """
 
         """
 
-        amount = csv_row.get(column_options['column'], None)
+        amount = value
 
-        # use secondary column if value of column is ''
-        if amount is not None and amount is '':
-            amount = csv_row.get(column_options['column_secondary'], None)
-
-        # use debit and credit column if column not provided
+        # use separate debit and credit column if column not provided
         if amount is None:
-            debit = csv_row.get(column_options['column_debit'], None)
-            credit = csv_row.get(column_options['column_credit'], None)
+            debit = csv_row.get(field_attr['column_debit'], None)
+            credit = csv_row.get(field_attr['column_credit'], None)
 
             # TODO here
             # TODO set cache for credit/debit
@@ -132,24 +208,16 @@ class ProcessTransactions(object):
         if amount is None:
             return None
 
-        # otherwise clean amount
-        amount_cleaned = self.clean_amount_field1(
-            amount, 
-            column_options['negative_for_debit'],
-            column_options['thousand_sep'],
-            column_options['decimal_sep']
-        )
-
-        return amount_cleaned
-            
-            
-
-    def clean_amount_field1(self, amount, negative_for_debit, thousand_sep, decimal_sep):
+        
         """
             set right status (debit or credit), clean negative sign, ...
             thousand sep and decimal sep.
         """
+
         cleaned_amount = amount
+        negative_for_debit = field_attr['negative_for_debit']
+        thousand_sep = field_attr['thousand_sep']
+        decimal_sep = field_attr['negative_for_debit']
 
         # in case debit/credit same column and distinguished by minus sign
         if negative_for_debit:
@@ -170,108 +238,13 @@ class ProcessTransactions(object):
         if decimal_sep == ',':
             cleaned_amount = cleaned_amount.replace(',', '.')
 
-
         return float(cleaned_amount)
 
 
-    def extract_amount_field(self, field, account_mapping, csv_row):
+    
+    def clean_date_field(self, value, csv_row, field_attr):
         """
-            Get amount valued from relevant fields. 
-            Also initiate cleaning of columns.
-        """
-
-
-        map_info_of_field = account_mapping.get(field, None)
-        column_name = map_info_of_field.get('column', None)
-
-
-        # column_secondary = map_info_of_field.get('column_secondary', None)
-        # column_debit = map_info_of_field.get('column_debit', None)
-        # column_credit = map_info_of_field.get('column_credit', None)
-        # default = map_info_of_field.get('default', None)
-        # regex = map_info_of_field.get('regex', None)
-        # has_negative = map_info_of_field.get('has_negative', None)
-        # decimal_sep = map_info_of_field.get('decimal_sep', None)
-        # thousand_sep = map_info_of_field.get('thousand_sep', None)
-
-        # if account has mapping like "column": "Amount (EUR)"
-        if isinstance(column_name, str):
-            amount = csv_row.get(column_name, None)
-
-            # return cleaned amount if cell not empty
-            if (amount and amount is not ''):
-                return self.clean_amount_field(amount, map_info_of_field)
-
-            # return cleaned amount if secondary column was used
-            if amount is '':
-                secondary_column_name = map_info_of_field.get('secondary_column', None)
-                amount = csv_row.get(secondary_column_name, None)
-
-                if (amount and amount is not ''):
-                    return self.clean_amount_field(amount, map_info_of_field)
-
-
-        # if account has mapping like "column": { "debit_colum": "xxx", "credit_column": "yyy" }
-        if isinstance(column_name, dict):
-            # TODO
-            amount = 2
-
-            # return cleaned amount only if cell not empty
-            if (amount and amount is not ''):
-                return self.clean_amount_field(amount, map_info_of_field, False)
-
-        return None
-
-
-    def clean_amount_field(self, amount, map_info_of_field, credit_or_debit=None):
-        """
-            set right status (debit or credit), clean negative sign, thousand sep and decimal sep
-        """
-
-        cleaned_amount = amount
-
-        negative_for_debit = map_info_of_field.get('negative_for_debit', None)
-        thousand_sep = map_info_of_field.get('thousand_sep', None)
-        decimal_sep =  map_info_of_field.get('decimal_sep', None)
-
-        # in case debit/credit same column and distinguished by minus sign
-        if negative_for_debit and not credit_or_debit:
-            if '-' in amount:
-                cleaned_amount = cleaned_amount.replace('-', '')
-
-                # set cache to status negative, i.e. debit
-                self.meta_cache.append({'status': 'debit'})
-
-            if '-' not in amount:
-                # set cache to status positive, i.e. credit
-                self.meta_cache.append({'status': 'credit'})
-
-        # set debit transaction
-        if credit_or_debit == 'debit':
-            # set cache to status negative, i.e. debit
-            self.meta_cache.append({'status': 'debit'})
-
-        # set credit transaction
-        if credit_or_debit == 'credit':
-            # set cache to status positive, i.e. credit
-            self.meta_cache.append({'status': 'credit'})
-
-        # remove thousand sep
-        if thousand_sep:
-            cleaned_amount = cleaned_amount.replace(thousand_sep, '')
-
-
-        # replace decimal sep
-        if decimal_sep == ',':
-            cleaned_amount = cleaned_amount.replace(',', '.')
-
-
-        return float(cleaned_amount)
-
-
-    def extract_date_field(self, csv_row, account_mapping, field_name):
-        """
-            
+            Sets date, weekday, weeknumber
         """
 
         # set weekday for date
@@ -281,24 +254,46 @@ class ProcessTransactions(object):
             'Sun',
         ]
 
-        map_info_of_field = account_mapping.get(field_name, None)
-        column_name = map_info_of_field.get('column', None)
-        date_format = map_info_of_field.get('format', '%d.%m.%y')
-
-        date = csv_row.get(column_name, None)
-
-        # get day
-        date = datetime.strptime(date, date_format).date()
+        # content of csv
+        date_csv = value
+        date_format = csv_row.get(field_attr['format'], '%d.%m.%y')
+        
+        # date
+        date = datetime.strptime(date_csv, date_format).date()
 
         # weekday
         day = date.weekday()
         self.meta_cache.append({'day': days[day]})
 
+        # week
+        week = date.isocalendar()[1]
+        self.meta_cache.append({'week': week})
+
         return date.__str__()
 
 
+    def clean_text_field(self, value, csv_row, field_attr):
+        
+        # integrate separator if not fir
+        value_list = field_attr['field_value']
+        if len(value_list) > 0:
+            if value_list[0] is not None:
+                sep = ' ' + field_attr['sep'] + ' '
+                return [sep, value]
+            else:
+                return value
+
+        # TODO ignore word, to upper, to lower etc.
+        
+        return value
+            
+
 
     def throw_error(self, err):
+        """
+            Appends error to error list
+        """
+
         try:
             error = ERORRS[err]
             self.errors.append(error)
