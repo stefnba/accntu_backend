@@ -1,4 +1,9 @@
+import hashlib
+import json
+
 from datetime import datetime
+
+from transactions.models import Transaction
 
 from .import_errors import ERORRS
 from .import_fields import DB_FIELDS
@@ -14,6 +19,7 @@ class ProcessTransactions(object):
         self.errors = []
         self.meta_cache = []
         self.transaction_list = []
+        self.prev_csv_row = None
         
 
     def iteratve_csv_rows(self):
@@ -23,8 +29,10 @@ class ProcessTransactions(object):
         """
         
         account = self.account
+        csv_content = self.csv_content
+
         
-        for index, csv_row in enumerate(self.csv_content, start=1):
+        for index, csv_row in enumerate(csv_content, start=1):
             transaction  = self.map_csv_columns_of_row(csv_row, account.mapping)
 
             # return if error
@@ -36,6 +44,17 @@ class ProcessTransactions(object):
             transaction['account'] = int(account.id)
             transaction['spending_account_rate'] = round(float(transaction['account_amount'] / transaction['spending_amount']), 4)
 
+            # hash part for duplicate check of given transaction
+            hash_value = self.hash_row(csv_row, self.prev_csv_row)
+            is_unique = self.is_unique(hash_value)
+
+            transaction['hash_duplicate'] = hash_value # append hash to container
+            transaction['is_unique'] = is_unique
+            transaction['is_import'] = is_unique # if user deselected trx
+
+            # necessary for hashing of next csvh row
+            self.prev_csv_row = csv_row 
+            
             # set transaction attributes from cache & clean cache
             for item in self.meta_cache:
                 for key, value in item.items():
@@ -286,6 +305,31 @@ class ProcessTransactions(object):
         # TODO ignore word, to upper, to lower etc.
         
         return value
+
+
+
+
+    def hash_row(self, csv_row, prev_csv_row):
+        """ 
+            Hash csv row
+        """
+        
+        # convert csv row values to list
+        hash_row = list(csv_row.values())
+
+        # include prev rows if exists
+        if prev_csv_row:
+            hash_row = hash_row + list(prev_csv_row.values())
+
+        return hashlib.md5(json.dumps(hash_row, sort_keys=True).encode('utf-8')).hexdigest()
+
+
+    def is_unique(self, hash):
+        """ 
+            Check if transaction exists in database already based on hash
+        """
+        
+        return Transaction.objects.filter(hash_duplicate=hash).count() == 0
             
 
 

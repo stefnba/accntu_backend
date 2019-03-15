@@ -1,15 +1,3 @@
-
-FIELDS = {
-    'spending_amount': {
-        'required': True,
-        'multiple': False,
-    },
-    'spending_currency': {
-        'required': True,
-        'multiple': False,
-    },
-}
-
 DB_FIELDS = {
     'account_amount': {
         'type': 'amount_field',
@@ -74,7 +62,7 @@ DB_FIELDS = {
             'regex'
         ]
     },
-    'amount_currency': {
+    'account_currency': {
         'type': 'text_field',
         'mandatory': False,
         'options': [
