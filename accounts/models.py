@@ -21,9 +21,6 @@ class Account(models.Model):
     country = models.CharField(max_length=3)
     currency = models.CharField(max_length=3)
     mapping = JSONField()
-    thousand_sep = models.CharField(max_length=1, blank=True, null=True, choices=DECIMAL_THOUSAND_CHOICES)
-    decimal_sep = models.CharField(max_length=1, choices=DECIMAL_THOUSAND_CHOICES)
-    has_negativesign = models.BooleanField(default=False)
     
     def __str__(self):
         return self.title

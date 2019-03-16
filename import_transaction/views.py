@@ -49,8 +49,14 @@ class Upload(APIView):
             # extract transactions from file
             read_file = ExtractTransactions(file_request, account)
 
+            # return if successful extraction
             if read_file.is_valid():
-                return Response(read_file.get_data(), status=status.HTTP_200_OK)
+                context = {
+                    'transactions': read_file.get_data(),
+                    'upload': 1
+                }
+
+                return Response(context, status=status.HTTP_200_OK)
             
             return Response(read_file.get_errors(), status=status.HTTP_400_BAD_REQUEST)
        

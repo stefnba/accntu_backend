@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 
 from datetime import datetime
 
@@ -143,10 +144,10 @@ class ProcessTransactions(object):
                     for field_attr in column_options_for_field
             }]
 
-        return self.set_field_value(csv_row, field_attrs, field_type)
+        return self.set_field_value(csv_row, field, field_attrs, field_type)
 
 
-    def set_field_value(self, csv_row, field_attrs, field_type):
+    def set_field_value(self, csv_row, field, field_attrs, field_type):
         """
 
         """
@@ -160,12 +161,27 @@ class ProcessTransactions(object):
             field_attr['index'] = index
             field_attr['field_value'] = field_value
             
-            # TODO regex
-            regex = csv_row.get(field_attr['column'], None)
-            value = regex
+            value = csv_row.get(field_attr['column'], None)
+
+            # extract regex
+            regex = field_attr['regex']
+            if regex:
+                result = re.search(regex, value)
+                # r'\s(\w{3})\s\d'
+                if result:
+                    value = result.group(1)
+
+                    # necessary as Barclaycard has . in regex, other is , as decimal
+                    if field_type == 'amount_field':
+                        value = value.replace('.', field_attr['decimal_sep'])
+
+                # if no value
+                else:
+                    value = None
+
 
             # use secondary column if value of column is ''
-            if value is not None and value is '':
+            if (value is not None and value is '') or value is None:
                 value = csv_row.get(field_attr['column_secondary'], None)
 
             # use default if value of secondary column is also '' (or none)
@@ -176,6 +192,7 @@ class ProcessTransactions(object):
             cleaned_value = getattr(self, 'clean_' + field_type)(
                 value, 
                 csv_row,
+                field,
                 field_attr
             )
 
@@ -206,7 +223,7 @@ class ProcessTransactions(object):
         return final_value
 
     
-    def clean_amount_field(self, value, csv_row, field_attr):
+    def clean_amount_field(self, value, csv_row, field, field_attr):
         """
 
         """
@@ -218,10 +235,18 @@ class ProcessTransactions(object):
             debit = csv_row.get(field_attr['column_debit'], None)
             credit = csv_row.get(field_attr['column_credit'], None)
 
-            # TODO here
-            # TODO set cache for credit/debit
-            # self.meta_cache.append({'status': 'debit'})
-            print('noooooone')
+            # set debit
+            if credit is '' and debit is not '':
+                amount = debit
+
+                if field == 'account_amount':
+                    self.meta_cache.append({'status': 'debit'})
+
+            if credit is not '' and debit is '':
+                amount = credit
+
+                if field == 'account_amount':
+                    self.meta_cache.append({'status': 'credit'})
 
         # return None if still no value for amount 
         if amount is None:
@@ -236,18 +261,20 @@ class ProcessTransactions(object):
         cleaned_amount = amount
         negative_for_debit = field_attr['negative_for_debit']
         thousand_sep = field_attr['thousand_sep']
-        decimal_sep = field_attr['negative_for_debit']
+        decimal_sep = field_attr['decimal_sep']
 
         # in case debit/credit same column and distinguished by minus sign
         if negative_for_debit:
             # debit
             if '-' in amount:
                 cleaned_amount = cleaned_amount.replace('-', '')
-                self.meta_cache.append({'status': 'debit'})
+                if field == 'account_amount':
+                    self.meta_cache.append({'status': 'debit'})
 
             # credit
             if '-' not in amount:
-                self.meta_cache.append({'status': 'credit'})
+                if field == 'account_amount':
+                    self.meta_cache.append({'status': 'credit'})
         
         # remove thousand sep
         if thousand_sep:
@@ -261,7 +288,7 @@ class ProcessTransactions(object):
 
 
     
-    def clean_date_field(self, value, csv_row, field_attr):
+    def clean_date_field(self, value, csv_row, field, field_attr):
         """
             Sets date, weekday, weeknumber
         """
@@ -291,20 +318,49 @@ class ProcessTransactions(object):
         return date.__str__()
 
 
-    def clean_text_field(self, value, csv_row, field_attr):
+    def clean_text_field(self, value, csv_row, field, field_attr):
+
+
+
+        # TODO ignore word, to upper, to lower etc.
+        if field == 'title':
+            value = self.clean_title(value, field_attr)
         
-        # integrate separator if not fir
+        """
+            Integrate separator if not fir
+        """
         value_list = field_attr['field_value']
         if len(value_list) > 0:
-            if value_list[0] is not None:
+            if value_list[0] is not None and value is not None and field_attr['sep'] is not None:
                 sep = ' ' + field_attr['sep'] + ' '
                 return [sep, value]
             else:
                 return value
 
-        # TODO ignore word, to upper, to lower etc.
-        
         return value
+    
+
+    def clean_title(self, title, field_attr):
+
+        stopswords = ['*', 'com', ',']
+        upperwords = ['AG', 'CHF', 'DEU', 'HK']
+        lowerwords = ['www', 'im', 'of', 'or', 'from', 'in']
+
+        if title is None:
+            return None
+
+        words = re.split(r'\.|\s+', title)
+        
+        # remove words and make first letter capitalized
+        words[:] = [word.title() for word in words if word.lower() not in stopswords]
+        
+        # lowerwords 
+        words[:] = [word.lower() if word.lower() in lowerwords else word for word in words]
+
+        # upperwords
+        words[:] = [word.upper() if word.upper() in upperwords else word for word in words]
+
+        return ' '.join(words)
 
 
 

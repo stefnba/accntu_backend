@@ -21,7 +21,6 @@ class Transaction(models.Model):
     import_upload = models.ForeignKey(ImportUpload, on_delete=models.SET_NULL, blank=True, null=True)
     
     title = models.CharField(max_length=255)
-    title_original = models.CharField(max_length=255)
     date = models.DateField()
     
     iban = models.CharField(max_length=255, blank=True, null=True)

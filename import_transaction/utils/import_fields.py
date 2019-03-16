@@ -46,7 +46,7 @@ DB_FIELDS = {
             'regex'
         ]
     },
-    'counterpart': {
+    'counterparty': {
         'type': 'text_field',
         'mandatory': False,
         'options': [
