@@ -40,7 +40,7 @@ class Upload(APIView):
 
         # upload file
         if serializer.is_valid():
-            serializer.save(user_id=request.user.id)
+            upload = serializer.save(user_id=request.user.id)
 
             # read .csv file
             file_request = request.FILES['upload_file']
@@ -53,7 +53,7 @@ class Upload(APIView):
             if read_file.is_valid():
                 context = {
                     'transactions': read_file.get_data(),
-                    'upload': 1
+                    'upload': upload.id
                 }
 
                 return Response(context, status=status.HTTP_200_OK)
@@ -75,19 +75,25 @@ class Import(ListCreateAPIView):
 
     def create(self, request, *args, **kwargs):
 
-        transactions = request.data
+        print(request.data)
+
+        transactions = request.data.get('transactions', None)
+        upload_file = request.data.get('upload', None)
         user = request.user.id
+
+        if transactions is None or upload_file is None:
+            return Response(False, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = ImportSerializer(data=transactions, many=True, context={'request': request})
         
-        # print(serializer.initial_data)
         if serializer.is_valid():
             
             # save import to db
             account = serializer.validated_data[0]['account']
             import_record = ImportUpload.objects.create(
                 user_id=user,
-                account=account
+                account=account,
+                upload_file_id=upload_file
             )
 
             serializer.save(

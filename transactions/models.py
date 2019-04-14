@@ -16,6 +16,14 @@ class FX(models.Model):
 
 
 class Transaction(models.Model):
+
+    STATUS_CHOICES = (
+        ('credit','credit'), 
+        ('debit','debit'),
+        ("transfer","transfer")
+    )
+
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
     import_upload = models.ForeignKey(ImportUpload, on_delete=models.SET_NULL, blank=True, null=True)
@@ -33,7 +41,7 @@ class Transaction(models.Model):
     # tags
     # bucket 
     # business_report
-    # status credit/debit
+    status = models.CharField(choices=STATUS_CHOICES, max_length=10) 
     note = models.CharField(max_length=255, blank=True, null=True)
 
     spending_amount = models.DecimalField(decimal_places=2, max_digits=1000)
