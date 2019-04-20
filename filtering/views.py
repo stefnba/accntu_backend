@@ -55,7 +55,7 @@ class Filtering(ListModelMixin, GenericAPIView):
                 for item in list(value):
 
                     field_name = add_info.get('title', None)
-                    field_value = qs.filter(account=item).values(field_name).first()
+                    field_value = qs.filter(**{ field: item }).values(field_name).first()
                 
                     v.append({
                         'key': item,
