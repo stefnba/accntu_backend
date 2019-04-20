@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'accounts',
+    'filtering',
     'import_transaction',
     'main',
     'transactions',

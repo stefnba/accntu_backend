@@ -4,14 +4,40 @@ from .models import (
     Transaction,
 )
 
-"""
-    Transaction
-"""""""""""""""""""""""""""""""""""""""""""""
+from accounts.models import Account
+
+class AccountForTransactionListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ('id', 'title',)
 
 class TransactionListSerializer(serializers.ModelSerializer):
+    account = AccountForTransactionListSerializer(read_only=True) 
+    
     class Meta:
         model = Transaction
-        fields = '__all__'
+        fields = (
+            'id',
+            'date',
+            'title',
+            'iban',
+            'bic',
+            'counterparty',
+            'purpose',
+            'country',
+            'status',
+            'note',
+            'spending_amount',
+            'spending_currency',
+            'spending_account_rate',
+            'account_amount',
+            'account_currency',
+            'account_user_rate',
+            'user_amount',
+            'user_currency',
+            'account',
+        )
+        
 
     
 class TransactionRetrieveUpdateSerializer(serializers.ModelSerializer):
