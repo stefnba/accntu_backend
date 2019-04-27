@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 
 from accounts.models import Account
+from budget.models import Label
 from import_transaction.models import ImportUpload
 
 # Create your models here.
@@ -18,9 +19,14 @@ class FX(models.Model):
 class Transaction(models.Model):
 
     STATUS_CHOICES = (
-        ('credit','credit'), 
-        ('debit','debit'),
-        ("transfer","transfer")
+        ('credit','Credit'), 
+        ('debit','Debit'),
+        ('transfer','Transfer')
+    )
+
+    CATEGORY_CHOICES = (
+        ('private','Private'), 
+        ('business','Business'),
     )
 
 
@@ -37,7 +43,8 @@ class Transaction(models.Model):
     purpose = models.CharField(max_length=255, blank=True, null=True)
     country = models.CharField(max_length=3, blank=True, null=True)
     
-    # type private business none
+    category = models.CharField(choices=CATEGORY_CHOICES, max_length=10, blank=True, null=True) 
+    label = models.ForeignKey(Label, on_delete=models.SET_NULL, blank=True, null=True)
     # tags
     # bucket 
     # business_report

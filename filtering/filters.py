@@ -15,7 +15,9 @@ FILTER_FIELDS = (
     'country',
     'date', 
     'spending_currency', 
-    'status'
+    'status',
+    'category',
+    'label',
 )
 
 
@@ -46,6 +48,10 @@ class TransactionFilterSet(filters.FilterSet):
     # account = filters.NumberFilter(field_name='account', lookup_expr = 'in')
     account = ListFilter(field_name='account', lookup_expr = 'in')
     date = ListFilter(field_name='date', lookup_expr = 'in')
+    spending_currency = ListFilter(field_name='spending_currency', lookup_expr = 'in')
+    category = ListFilter(field_name='category', lookup_expr = 'in')
+    status = ListFilter(field_name='status', lookup_expr = 'in')
+    label = ListFilter(field_name='label', lookup_expr = 'in')
     
 
     class Meta:

@@ -1,14 +1,16 @@
 from django.urls import path
 
 from .views import (
-    TransactionRetrieveUpdate,
+    TransactionBulkUpdate,
     TransactionList,
+    TransactionRetrieveUpdate,
 )
 
 app_name = "transactions"
 
 
 urlpatterns = [
+    path('transaction/<int:id>/', TransactionRetrieveUpdate.as_view(), name='transaction-detail'),
     path('transactions/', TransactionList.as_view(), name='transaction-list'),
-    path('transaction/<int:id>/', TransactionRetrieveUpdate.as_view(), name='transaction'),
+    path('transactions/update/', TransactionBulkUpdate.as_view(), name='transaction-bulk-update'),
 ]

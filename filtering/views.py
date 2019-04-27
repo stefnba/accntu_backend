@@ -26,11 +26,13 @@ from .filters import FILTER_FIELDS, TransactionFilterSet
 
 # Create your views here.
 
-
 FILTER_FIELDS_NESTED = {
     'account': {
         'title': 'account__title'
-    }
+    },
+    'label': {
+        'title': 'label__title'
+    },
 }
 
 
@@ -39,6 +41,11 @@ class Filtering(ListModelMixin, GenericAPIView):
     filterset_class = TransactionFilterSet
 
     def list(self, request, *args, **kwargs):
+
+
+        print(Transaction.CATEGORY_CHOICES)
+
+
         qs = self.filter_queryset(self.get_queryset())
 
         fields = FILTER_FIELDS
@@ -46,67 +53,33 @@ class Filtering(ListModelMixin, GenericAPIView):
         filter_options = {}
 
         for field in fields:
-            value = qs.order_by(field).values_list(field, flat=True).distinct(field)
+            qs_distinct = qs.order_by(field).values_list(field, flat=True).distinct(field)
 
-            add_info = FILTER_FIELDS_NESTED.get(field, None)
+            filter_choices = []
             
-            if add_info is not None:
-                v = []
-                for item in list(value):
+            for item in list(qs_distinct):
 
+                title = item
+
+                # if different title is specified
+                add_info = FILTER_FIELDS_NESTED.get(field, None)
+                if add_info is not None:
+                
                     field_name = add_info.get('title', None)
                     field_value = qs.filter(**{ field: item }).values(field_name).first()
+                    title = field_value[field_name]
                 
-                    v.append({
-                        'key': item,
-                        'title': field_value[field_name]
-                    })
-                
-                value = v
+                filter_choices.append({
+                    'id': item,
+                    'title': title
+                })
             
-            filter_options[field] = value
+            
+            filter_options[field] = filter_choices
 
         
         return Response(filter_options)
 
     def get(self, request, *args, **kwargs):
         return self.list(request, *args, *kwargs)
-
-
-
-# class Filtering(APIView):
-
-#     def get(self, request):
-
-#         fields = (
-#             'account__title',
-#             'account_currency', 
-#             'counterparty',
-#             'country',
-#             'date', 
-#             'spending_currency', 
-#             'status'
-#         )
-
-#         filter_options = {}
-
-#         values = Transaction.objects.all()
-
-#         for field in fields:
-#             value = values.order_by(field).values_list(field, flat=True).distinct(field)
-#             filter_options[field] = value
-
-#         return Response(filter_options, status=status.HTTP_200_OK)
-
-
-    # queryset = Transaction.objects.all()
-    # serializer_class = DateListSerializer
-
-    # def get_queryset(self):
-    #     b = 'date'
-    #     a = Transaction.objects.values_list(b, flat=True).distinct(b)
-    #     print(list(a))
-    #     print(len(list(a)))
-
-    #     return Transaction.objects.distinct('date')
-
+        
