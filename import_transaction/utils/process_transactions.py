@@ -152,6 +152,8 @@ class ProcessTransactions(object):
 
         """
 
+
+
         field_value = []
         attrs_is_list = len(field_attrs) > 1
 
@@ -284,6 +286,8 @@ class ProcessTransactions(object):
         if decimal_sep == ',':
             cleaned_amount = cleaned_amount.replace(',', '.')
 
+        print(cleaned_amount)
+
         return float(cleaned_amount)
 
 
@@ -302,7 +306,10 @@ class ProcessTransactions(object):
 
         # content of csv
         date_csv = value
-        date_format = csv_row.get(field_attr['format'], '%d.%m.%y')
+        # date_format = csv_row.get(field_attr['format'], '%d.%m.%y')
+        date_format = field_attr.get('format', '%d.%m.%y')
+        print(field_attr);
+        print(field_attr['format']);
         
         # date
         date = datetime.strptime(date_csv, date_format).date()
@@ -342,17 +349,33 @@ class ProcessTransactions(object):
 
     def clean_title(self, title, field_attr):
 
-        stopswords = ['*', 'com', ',']
+        stopwords = ['*', 'com', ',', 'ag']
         upperwords = ['AG', 'CHF', 'DEU', 'HK']
         lowerwords = ['www', 'im', 'of', 'or', 'from', 'in']
+
+       
+
+        stopwords_account = field_attr.get('stopwords', None)
+        
+        if stopwords_account is not None:
+            stopwords_joint = stopwords + list(stopwords_account)
+        else: 
+            stopwords_joint = stopwords
+
+        # print(stopwords_joint)
+
 
         if title is None:
             return None
 
-        words = re.split(r'\.|\s+', title)
+        words = re.split(r'\.|\s+|\,', title)
+
+        # print(words)
         
         # remove words and make first letter capitalized
-        words[:] = [word.title() for word in words if word.lower() not in stopswords]
+        words[:] = [word.title() for word in words if word.lower() not in stopwords_joint]
+
+        # print(words)
         
         # lowerwords 
         words[:] = [word.lower() if word.lower() in lowerwords else word for word in words]

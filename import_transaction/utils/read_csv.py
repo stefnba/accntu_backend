@@ -21,8 +21,14 @@ class ReadCSV(object):
         csv_file = self.file
         
         csv_file.seek(0)
+
+        # check if first row is header or other strings like sep=
+        first_row = csv_file.readline()
+        if 'sep=' not in str(first_row):
+            csv_file.seek(0)
+
         content = StringIO(csv_file.read().decode('utf-8', errors='ignore'))
-        
+        # print(content)
         return csv.DictReader(content, delimiter=';')
     
 

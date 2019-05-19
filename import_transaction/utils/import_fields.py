@@ -27,7 +27,7 @@ DB_FIELDS = {
         'multiple': True,
         'options': [
             'column', 'column_secondary', 'default', 
-            'regex', 'sep'
+            'regex', 'sep', 'stopwords'
         ]
     },
     'iban': {

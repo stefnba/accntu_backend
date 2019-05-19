@@ -49,10 +49,13 @@ class TransactionFilterSet(filters.FilterSet):
     account = ListFilter(field_name='account', lookup_expr = 'in')
     date = ListFilter(field_name='date', lookup_expr = 'in')
     spending_currency = ListFilter(field_name='spending_currency', lookup_expr = 'in')
+    account_currency = ListFilter(field_name='account_currency', lookup_expr = 'in')
     category = ListFilter(field_name='category', lookup_expr = 'in')
     status = ListFilter(field_name='status', lookup_expr = 'in')
     label = ListFilter(field_name='label', lookup_expr = 'in')
     
+    date_start = filters.DateFilter(field_name='date', lookup_expr = 'gte')
+    date_end = filters.DateFilter(field_name='date', lookup_expr = 'lte')
 
     class Meta:
         model = Transaction

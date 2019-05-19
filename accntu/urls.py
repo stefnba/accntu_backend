@@ -23,6 +23,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls', namespace='accounts',)), # accounts
     path('admin/', admin.site.urls),    # admin
     path('auth/', include('oauth2_provider.urls', namespace='oauth2_provider')), # oauth2
+    path('business/', include('business.urls', namespace='business',)),
     path('filtering/', include('filtering.urls', namespace='filtering')), # oauth2
     path('import/', include('import_transaction.urls', namespace='import_transaction',)),
     path('transactions/', include('transactions.urls', namespace='transactions',)),
