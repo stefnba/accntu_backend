@@ -1,20 +1,27 @@
 from django.urls import path
 
 from .views import (
-    AssignableTransactionsList,
+    ItemListFilteredByReport,
     ItemRetrieveUpdate,
-    ReportListDraft,
-    ReportListSubmitted,
-    TransactionRetrieveUpdate,
+    ReportCreate,
+    ReportList,
+    ReportRetrieveUpdate,
+    ReportDestroy,
 )
 
 app_name = "business"
 
 
 urlpatterns = [
-    path('assignable_transactions/', AssignableTransactionsList.as_view(), name='report-list-draft'),
-    path('item/<int:pk>/', ItemRetrieveUpdate.as_view(), name='item-detail'),
-    path('reports/draft/', ReportListDraft.as_view(), name='report-list-draft'),
-    path('reports/submitted/', ReportListSubmitted.as_view(), name='report-list-submitted'),
-    path('reports/report/<int:id>/', TransactionRetrieveUpdate.as_view(), name='report-detail'),
+    
+    # Item
+    path('items/item/<int:pk>/', ItemRetrieveUpdate.as_view(), name='item-retrieve-update'),
+    path('items/no-report/', ItemListFilteredByReport.as_view(), name='item-list-filtered-by-report'),
+    path('reports/report/<int:report>/items/', ItemListFilteredByReport.as_view(), name='item-list-filtered-by-report'),
+    
+    # Report
+    path('reports/<str:status>/', ReportList.as_view(), name='report-list'),
+    path('reports/report/<int:id>/', ReportRetrieveUpdate.as_view(), name='report-retrieve-update'),
+    path('reports/report/<int:id>/delete/', ReportDestroy.as_view(), name='report-destroy'),
+    path('reports/report/create/', ReportCreate.as_view(), name='report-create'),
 ]

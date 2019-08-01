@@ -5,6 +5,15 @@ from django.contrib.postgres.fields import JSONField
 
 # Create your models here.
 
+class Provider(models.Model):
+    provider = models.CharField(max_length=255)
+    country = models.CharField(max_length=2)
+    currency = models.CharField(max_length=3)
+    field_map = JSONField()
+    color = models.CharField(max_length=255, blank=True, null=True)
+    logo = models.CharField(max_length=255, blank=True, null=True)
+
+
 class Account(models.Model):
     
     DECIMAL_THOUSAND_CHOICES = (

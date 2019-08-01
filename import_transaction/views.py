@@ -112,6 +112,38 @@ class Import(ListCreateAPIView):
 
 
 
+
+class ImportLocal(ListCreateAPIView):
+
+    serializer_class = ImportSerializer
+    queryset = ''
+    
+    def create(self, request, *args, **kwargs):
+
+        transactions = request.data.get('transactions', None)
+        user = request.user.id
+
+        if transactions is None:
+            return Response(False, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ImportSerializer(data=transactions, many=True, context={'request': request})
+
+        if serializer.is_valid():
+            print('valid')
+
+
+            serializer.save(
+                user_id=user,
+            )
+
+        else:
+            print('not valid')
+            print(serializer.errors)
+
+        return Response(True, status=status.HTTP_200_OK)
+
+
+
 """ 
     Test
     

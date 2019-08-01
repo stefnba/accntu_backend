@@ -17,6 +17,8 @@ class ImportSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
 
+        # print(data)
+
         # get user, and user_currency
         request = self.context.get('request', None)
         user_currency = Settings.objects.get(user_id=request.user.id).user_currency
@@ -27,7 +29,8 @@ class ImportSerializer(serializers.ModelSerializer):
         # modify serializer
         modified_data = data
         
-        modified_data['account'] = int(data['account'])
+        modified_data['account'] = int(3)
+        # modified_data['account'] = int(data['account'])
         
         modified_data['account_user_rate'] = fx.get_rate()
         modified_data['user_amount'] = fx.get_amount(data['account_amount'])

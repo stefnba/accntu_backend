@@ -57,7 +57,6 @@ class TransactionBulkUpdate(APIView):
         serializer = TransactionBulkUpdateSerializer(queryset, data=request.data, many=True, partial=True)
         if serializer.is_valid():
             saved = serializer.save()
-            print(saved)
             return Response({
                 'length': len(saved)
             },  status=status.HTTP_201_CREATED)

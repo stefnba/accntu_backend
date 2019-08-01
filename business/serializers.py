@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.fields import CurrentUserDefault
 
 from transactions.models import (
     Transaction
@@ -9,29 +10,13 @@ from .models import (
     Report,
 )
 
-class ReportListSerializer(serializers.ModelSerializer):
-    report_total = serializers.DecimalField(decimal_places=2, max_digits=6)
-    nmbr_items = serializers.IntegerField()
-
-    
-    class Meta:
-        model = Report
-        # fields = '__all__'
-        fields = (
-            'id',
-            'title',
-            'report_total',
-            'submit_date',
-            'status',
-            'nmbr_items',
-            'start_date',
-            'end_date',
-        )
 
 
+#  Transaction
+###########################
 
-
-class AssignableTransactionsListSerializer(serializers.ModelSerializer):
+class TransactionOneToOneSerializer(serializers.ModelSerializer):
+    """ Fields from Transaction models for one to one relationship with Item model """
     
     class Meta:
         model = Transaction
@@ -46,7 +31,12 @@ class AssignableTransactionsListSerializer(serializers.ModelSerializer):
             'account_currency',
         )
 
+
+#  Item
+###########################
+
 class ReportItemRetrieveUpdateSerializer(serializers.ModelSerializer):
+    """ One single Item (business transaction), used for retrieve / update """
 
     class Meta:
         model = Item
@@ -54,11 +44,15 @@ class ReportItemRetrieveUpdateSerializer(serializers.ModelSerializer):
         fields = (
             'report_amount',
             'report',
+            'has_system',
+            'has_receipt',
         )
-    
+
 
 class ReportItemsListSerializer(serializers.ModelSerializer):
-    items = AssignableTransactionsListSerializer(source='transaction', read_only=True)
+    """  """
+
+    items = TransactionOneToOneSerializer(source='transaction', read_only=True)
 
     class Meta:
         model = Item
@@ -67,6 +61,8 @@ class ReportItemsListSerializer(serializers.ModelSerializer):
             'report_amount',
             'report',
             'items',
+            'has_system',
+            'has_receipt',
         )
     
     # make items at same level as other serializer fields
@@ -78,9 +74,34 @@ class ReportItemsListSerializer(serializers.ModelSerializer):
         return data
 
 
-class ReportRetrieveUpdateSerializer(serializers.ModelSerializer):
+#  Report
+###########################
+
+class ReportListSerializer(serializers.ModelSerializer):
+    """ List all Reports """
+
     report_total = serializers.DecimalField(decimal_places=2, max_digits=6)
     nmbr_items = serializers.IntegerField()
+
+    class Meta:
+        model = Report
+        # fields = '__all__'
+        fields = (
+            'id',
+            'title',
+            'report_total',
+            'submit_amount',
+            'submit_date',
+            'status',
+            'nmbr_items',
+            'start_date',
+            'end_date',
+        )
+
+
+class ReportRetrieveUpdateSerializer(serializers.ModelSerializer):
+    report_total = serializers.DecimalField(decimal_places=2, max_digits=6, read_only=True)
+    nmbr_items = serializers.IntegerField(read_only=True)
     items = ReportItemsListSerializer(source='item', many=True, read_only=True)
 
     class Meta:
@@ -88,12 +109,15 @@ class ReportRetrieveUpdateSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'title',
-            'report_total',
-            'submit_date',
             'status',
-            'nmbr_items',
             'start_date',
             'end_date',
+            'submit_date',
+            'submit_amount',
+            'payout_date',
+            'payout_amount',
+            'nmbr_items',
+            'report_total',
             'items',
         )
 
@@ -102,3 +126,25 @@ class ReportRetrieveUpdateSerializer(serializers.ModelSerializer):
             'report_total',
             'items',
         )
+
+
+class ReportCreateSerializer(serializers.ModelSerializer):
+    """ Create new Report """
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        return Report.objects.create(user=user, **validated_data)
+
+    class Meta:
+        model = Report
+        # fields = '__all__'
+        fields = (
+            'title',
+            'start_date',
+            'end_date',
+            'id'
+        )
+
+
+
+

@@ -3,12 +3,10 @@ from django.db.models.functions import Coalesce
 from django.shortcuts import render
 
 from rest_framework.generics import (
+    DestroyAPIView,
+    CreateAPIView,
     ListAPIView,
     RetrieveUpdateAPIView
-)
-
-from transactions.models import (
-    Transaction
 )
 
 from .models import (
@@ -16,42 +14,63 @@ from .models import (
     Report,
 )
 
+from transactions.models import (
+    Transaction
+)
+
 from .serializers import (
-    AssignableTransactionsListSerializer,
+    ReportCreateSerializer,
     ReportListSerializer,
+    ReportItemsListSerializer,
     ReportItemRetrieveUpdateSerializer,
     ReportRetrieveUpdateSerializer,
+    TransactionOneToOneSerializer,
 )
 
 # Create your views here.
 
-class ReportListDraft(ListAPIView):
+
+#  Report
+###########################
+
+class ReportList(ListAPIView):
     """ listing all transactions """
     
-    queryset = Report.objects.filter(status='draft')
     serializer_class = ReportListSerializer
 
-
-class ReportListSubmitted(ListAPIView):
-    """ listing all transactions """
-    
-    queryset = Report.objects.filter(status='submitted')
-    serializer_class = ReportListSerializer
+    def get_queryset(self):
+        print(self.kwargs['status'])
+        return Report.objects.filter(status=self.kwargs['status'])
 
 
-class AssignableTransactionsList(ListAPIView):
-    """ listing all transactions """
-    
-    queryset = Transaction.objects.filter(status='debit', category='business')
-    serializer_class = AssignableTransactionsListSerializer
-
-
-class TransactionRetrieveUpdate(RetrieveUpdateAPIView):
+class ReportRetrieveUpdate(RetrieveUpdateAPIView):
     """ listing all transactions """
     
     queryset = Report.objects.all()
     serializer_class = ReportRetrieveUpdateSerializer
     lookup_field = 'id'
+
+
+class ReportCreate(CreateAPIView):
+    """" Create a new report """
+
+    queryset = Report.objects.all()
+    serializer_class = ReportCreateSerializer
+
+
+class ReportDestroy(DestroyAPIView):
+    """" Delete a report """
+
+    queryset = Report.objects.all()
+    serializer_class = ReportRetrieveUpdateSerializer
+    lookup_field = 'id'
+
+
+
+
+
+#  Item
+###########################
 
 class ItemRetrieveUpdate(RetrieveUpdateAPIView):
     """ Retrieve / update one report item """
@@ -59,3 +78,12 @@ class ItemRetrieveUpdate(RetrieveUpdateAPIView):
     queryset = Item.objects.all()
     serializer_class = ReportItemRetrieveUpdateSerializer
 
+
+class ItemListFilteredByReport(ListAPIView):
+    """ listing all items, filtered by report """
+    
+    serializer_class = ReportItemsListSerializer
+
+    def get_queryset(self):
+        f = self.kwargs.get('report', None)        
+        return Item.objects.filter(report=f).order_by('transaction__date', 'transaction_id')

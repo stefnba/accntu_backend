@@ -1,9 +1,14 @@
 from django.conf import settings
+# from django.apps import apps
 from django.db import models
 
 from accounts.models import Account
-from budget.models import Label
+from budget.models import Label, Expense
 from import_transaction.models import ImportUpload
+from business.models import Item
+
+
+# Item = apps.get_model('business', 'Item')
 
 # Create your models here.
 
@@ -70,3 +75,37 @@ class Transaction(models.Model):
 
     def __str__(self):
         return self.title
+
+
+    prev_category = None
+    def __init__(self, *args, **kwargs):
+        super(Transaction, self).__init__(*args, **kwargs)
+        self.prev_category = self.category
+
+    def save(self, *args, **kwargs):
+
+        print('prev', self.prev_category, 'kk')
+        print('now', self.category)
+
+        if self.prev_category is not self.category:
+            print('changed')
+
+            if self.prev_category is 'business':
+                print('was b')
+
+            if self.category is not 'business':
+                print('delete')
+                try:
+                    instance = Item.objects.get(pk=self.id)
+                    instance.delete()
+                except Item.DoesNotExist:
+                    pass
+                
+
+            if self.category is 'business':
+                instance = Item.objects.create(pk=self.id, report_amount=self.user_amount)
+
+            if self.category is 'private':
+                instance = Expense.objects.create(pk=self.id, budget_amount=self.user_amount)
+
+        super().save(*args, **kwargs)
