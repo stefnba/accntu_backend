@@ -6,13 +6,27 @@ from django.contrib.postgres.fields import JSONField
 # Create your models here.
 
 class Provider(models.Model):
+    
+    ACCESS_TYPE_CHOICES = (
+        ('api','API Access'), 
+        ('scr','Web Scrapping'),
+        ("csv","CSV Import")
+    )
+    
+    
     provider = models.CharField(max_length=255)
+    key = models.CharField(max_length=255)
     country = models.CharField(max_length=2)
     currency = models.CharField(max_length=3)
-    field_map = JSONField()
+    parser_map = JSONField()
     color = models.CharField(max_length=255, blank=True, null=True)
     logo = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    access_type = models.CharField(max_length=255, choices=ACCESS_TYPE_CHOICES)
 
+    def __str__(self):
+        return '{} - {}'.format(self.provider, self.country)
 
 class Account(models.Model):
     
@@ -26,10 +40,7 @@ class Account(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=255)
-    bank = models.CharField(max_length=255)
-    country = models.CharField(max_length=3)
-    currency = models.CharField(max_length=3)
-    mapping = JSONField()
+    provider = models.ForeignKey(Provider,on_delete=models.SET_NULL, blank=True, null=True)
     
     def __str__(self):
         return self.title

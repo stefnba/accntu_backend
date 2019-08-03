@@ -129,18 +129,25 @@ class ImportLocal(ListCreateAPIView):
         serializer = ImportSerializer(data=transactions, many=True, context={'request': request})
 
         if serializer.is_valid():
-            print('valid')
 
-
-            serializer.save(
-                user_id=user,
+            saved = serializer.save(
+                user_id=user
             )
+
+            saved = [t for t in saved if t is not False]
+            res = {
+                'transactions': 'to come',
+                'nmbr': len(saved)
+            }
+            
+            return Response(res, status=status.HTTP_201_CREATED)
 
         else:
             print('not valid')
             print(serializer.errors)
 
-        return Response(True, status=status.HTTP_200_OK)
+            Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 

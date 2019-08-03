@@ -45,7 +45,7 @@ class Transaction(models.Model):
     iban = models.CharField(max_length=255, blank=True, null=True)
     bic = models.CharField(max_length=255, blank=True, null=True)
     counterparty = models.CharField(max_length=255, blank=True, null=True)
-    purpose = models.CharField(max_length=255, blank=True, null=True)
+    reference_text = models.CharField(max_length=255, blank=True, null=True)
     country = models.CharField(max_length=3, blank=True, null=True)
     
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=10, blank=True, null=True) 
@@ -67,6 +67,7 @@ class Transaction(models.Model):
 
     hash_duplicate = models.CharField(max_length=255) 
     is_active = models.BooleanField(default=True)
+    is_new = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True) # only for odering
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -84,8 +85,8 @@ class Transaction(models.Model):
 
     def save(self, *args, **kwargs):
 
-        print('prev', self.prev_category, 'kk')
-        print('now', self.category)
+        # print('prev', self.prev_category, 'kk')
+        # print('now', self.category)
 
         if self.prev_category is not self.category:
             print('changed')
