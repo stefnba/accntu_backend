@@ -19,6 +19,9 @@ class FX(models.Model):
     counter_currency = models.CharField(max_length=3)
     rate = models.DecimalField(decimal_places=4, max_digits=1000)
 
+    def __str__(self):
+        return '{}_{}_{}'.format(self.transaction_currency, self.counter_currency, self.date)
+
 
 
 class Transaction(models.Model):
