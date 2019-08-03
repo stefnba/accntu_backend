@@ -23,7 +23,7 @@ class TransactionListSerializer(serializers.ModelSerializer):
             'iban',
             'bic',
             'counterparty',
-            'purpose',
+            'reference_text',
             'country',
             'category',
             'status',
