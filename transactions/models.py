@@ -22,6 +22,10 @@ class FX(models.Model):
     def __str__(self):
         return '{}_{}_{}'.format(self.transaction_currency, self.counter_currency, self.date)
 
+    class Meta:
+        verbose_name = 'FX Rate'
+        verbose_name_plural = 'FX Rates'
+
 
 
 class Transaction(models.Model):
@@ -75,7 +79,7 @@ class Transaction(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['date', 'created_at']
+        ordering = ['-date', 'created_at']
 
     def __str__(self):
         return self.title

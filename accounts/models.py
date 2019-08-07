@@ -12,6 +12,11 @@ class Provider(models.Model):
         ('scr','Web Scrapping'),
         ("csv","CSV Import")
     )
+
+    PROVIDER_TYPE_CHOICES = (
+        ('card','Card'), 
+        ('account','Account')
+    )
     
     
     provider = models.CharField(max_length=255)
@@ -19,11 +24,13 @@ class Provider(models.Model):
     country = models.CharField(max_length=2)
     currency = models.CharField(max_length=3)
     parser_map = JSONField()
+    csv_meta = JSONField(blank=True, null=True)
     color = models.CharField(max_length=255, blank=True, null=True)
     logo = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     access_type = models.CharField(max_length=255, choices=ACCESS_TYPE_CHOICES)
+    provider_type = models.CharField(max_length=255, choices=PROVIDER_TYPE_CHOICES)
 
     def __str__(self):
         return '{} - {}'.format(self.provider, self.country)

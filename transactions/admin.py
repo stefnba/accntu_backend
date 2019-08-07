@@ -5,7 +5,8 @@ from .models import (FX, Transaction)
 
 class TransactionAdmin(admin.ModelAdmin):
     list_display = (
-        'title', 'date',
+        'title',
+        'date',
         'spending_amount',
         'spending_currency',
         'account_amount',
@@ -16,8 +17,33 @@ class TransactionAdmin(admin.ModelAdmin):
     list_filter = (
         'account',
         'spending_currency',
+        'status',
+        'date',
+        # 'user_amount'
     )
 
-admin.site.register(FX)
+    search_fields = (
+        'title',
+    )
+
+class FXAdmin(admin.ModelAdmin):
+    list_display = (
+        'date',
+        'transaction_currency',
+        'counter_currency',
+        'rate'
+    )
+
+    list_filter = (
+        'transaction_currency',
+        'counter_currency',
+        'date'
+    )
+
+    search_fields = (
+        'date',
+    )
+
+admin.site.register(FX, FXAdmin)
 admin.site.register(Transaction, TransactionAdmin)
 
