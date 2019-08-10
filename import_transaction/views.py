@@ -22,6 +22,8 @@ import json
 
 
 
+from .tasks import do_work
+from celery.result import AsyncResult
 
 
 
@@ -156,10 +158,30 @@ class ImportLocal(ListCreateAPIView):
     
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+
+
+
 class Test(APIView):
     def get(self, request):
         
-        print(request.user.id)
-        return Response('request')
+        task = do_work.delay(4500)
+        print(task)
+        print(f"id={task.id}, state={task.state}, status={task.status}") 
+        print(task.get())
+        return HttpResponse(task.id)
+
+
+
+class Test2(APIView):
+    def get(self, request, id):
+        
+        res = AsyncResult(id)
+        print(res.state)
+        print(res.get())
+        return HttpResponse(res.get())
+
+
+
+
 
 
