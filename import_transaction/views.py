@@ -200,11 +200,11 @@ class Test4(APIView):
 
         driver = webdriver.Chrome(chrome_options=chrome_options)
         driver.get('https://www.google.com/')
-        print(driver.title)
+        title = driver.title
         driver.close()
 
 
-        title = 12
+   
 
         return HttpResponse(title)
 
