@@ -5,7 +5,8 @@ from .views import (
     ImportLocal,
     Upload,
     Test,
-    Test2
+    Test2,
+    Test4
 )
 
 app_name = "import_transaction"
@@ -16,4 +17,5 @@ urlpatterns = [
     path('import/local/', ImportLocal.as_view(), name='file-upload'),
     path('test/', Test.as_view(), name='test'),
     path('test/<str:id>/', Test2.as_view(), name='test'),
+    path('driver/', Test4.as_view(), name='test'),
 ]

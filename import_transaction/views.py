@@ -26,6 +26,10 @@ from .tasks import do_work
 from celery.result import AsyncResult
 
 
+from pyvirtualdisplay import Display
+from selenium import webdriver
+
+
 
 
 """ 
@@ -164,7 +168,7 @@ class ImportLocal(ListCreateAPIView):
 class Test(APIView):
     def get(self, request):
         
-        task = do_work.delay(4500)
+        task = do_work.delay(45)
         print(task)
         print(f"id={task.id}, state={task.state}, status={task.status}") 
         print(task.get())
@@ -179,6 +183,30 @@ class Test2(APIView):
         print(res.state)
         print(res.get())
         return HttpResponse(res.get())
+
+
+class Test4(APIView):
+    def get(self, request):
+
+        display = Display(visible=0, size=(800, 600))
+        display.start()
+
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument('--no-sandbox')
+        prefs={"profile.managed_default_content_settings.images": 2}
+        chrome_options.add_experimental_option('prefs', prefs)
+        chrome_options.add_argument('--headless')
+        # chrome_options.add_argument('--disable-dev-shm-usage')
+
+        driver = webdriver.Chrome(chrome_options=chrome_options)
+        driver.get('https://www.google.com/')
+        print(driver.title)
+        driver.close()
+
+
+        title = 12
+
+        return HttpResponse(title)
 
 
 
