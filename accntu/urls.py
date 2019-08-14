@@ -26,7 +26,7 @@ urlpatterns = [
     path('budget/', include('budget.urls', namespace='budget',)),
     path('business/', include('business.urls', namespace='business',)),
     path('filtering/', include('filtering.urls', namespace='filtering')), # oauth2
-    path('import/', include('import_transaction.urls', namespace='import_transaction',)),
+    path('import/', include('importing.urls', namespace='importing',)),
     path('transactions/', include('transactions.urls', namespace='transactions',)),
     path('users/', include('users.urls', namespace='users',)),  # users app
 ]

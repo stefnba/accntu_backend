@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'business',
     'filtering',
     'import_transaction',
+    'importing',
     'main',
     'transactions',
     'users',

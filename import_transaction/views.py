@@ -21,8 +21,10 @@ from io import TextIOWrapper
 import json
 
 
+from django.core.cache import caches  
+from django.core.cache import cache
 
-from .tasks import do_work
+from .tasks import do_work, driver, sleep_task
 from celery.result import AsyncResult
 
 
@@ -157,6 +159,55 @@ class ImportLocal(ListCreateAPIView):
 
 
 
+
+
+class ImportViaAPI(APIView):
+
+    def get(self, request):
+        
+        # TODO list all api and scrapping accounts here
+
+        accounts = [1, 2, 3]
+        
+        return Response(accounts, status=status.HTTP_200_OK)
+
+    def post(self, request):
+
+        accounts = request.POST.get('accounts', None)
+
+        if accounts:
+            print(accounts)
+
+            task = sleep_task.delay(30)
+
+            res = {
+                'task_id': task.id,
+                'msg': 'Import has started'
+            }
+
+            return Response(res, status=status.HTTP_201_CREATED)
+
+        return Response({
+            'err_msg': 'No accounts provided!'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ImportViaAPIRunning(APIView):
+
+    def get(self, request, task_id):
+
+        task = AsyncResult(task_id)
+
+        print(task)
+
+        res = {
+            'state': task.state,
+            'meta': task.info
+        }
+
+        return Response(res, status=status.HTTP_201_CREATED)
+
+
 """ 
     Test
     
@@ -178,35 +229,48 @@ class Test(APIView):
 
 class Test2(APIView):
     def get(self, request, id):
+
+        print(cache.get('my_key'))
         
         res = AsyncResult(id)
-        print(res.state)
-        print(res.get())
-        return HttpResponse(res.get())
+        
+        return Response({
+            'state': res.state,
+            'meta': res.info
+        })
 
 
 class Test4(APIView):
     def get(self, request):
 
-        display = Display(visible=0, size=(800, 600))
-        display.start()
+        # display = Display(visible=0, size=(800, 600))
+        # display.start()
 
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument('--no-sandbox')
-        prefs={"profile.managed_default_content_settings.images": 2}
-        chrome_options.add_experimental_option('prefs', prefs)
-        chrome_options.add_argument('--headless')
-        # chrome_options.add_argument('--disable-dev-shm-usage')
+        # chrome_options = webdriver.ChromeOptions()
+        # chrome_options.add_argument('--no-sandbox')
+        # prefs={"profile.managed_default_content_settings.images": 2}
+        # chrome_options.add_experimental_option('prefs', prefs)
+        # chrome_options.add_argument('--headless')
+        # # chrome_options.add_argument('--disable-dev-shm-usage')
 
-        driver = webdriver.Chrome(chrome_options=chrome_options)
-        driver.get('https://www.google.com/')
-        title = driver.title
-        driver.close()
+        # driver = webdriver.Chrome(chrome_options=chrome_options)
+        # driver.get('https://www.google.com/')
+        # title = driver.title
+        # driver.close()
+
+        # task = driver.delay()
+        task = sleep_task.delay(30)
 
 
+        cache.set('my_key', 'hello, world!', 30)
+
+        
    
 
-        return HttpResponse(title)
+        return Response({
+            'id': task.id,
+            'state': task.state
+        })
 
 
 
