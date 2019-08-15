@@ -6,6 +6,26 @@ import requests
 from .api.base import BaseApiAccess
 from .scrapping.base import BaseScrapper
 
+
+from django.core.cache import cache
+import time
+
+def wait_until(timeout, period=0.25, *args, **kwargs):
+    mustend = time.time() + timeout
+    while time.time() < mustend:
+        tan_set = cache.ttl('my_key') # ttl not get since django-redis caching, async process on differnt memory
+        print(tan_set)
+
+        if tan_set:
+            print('cache set')
+            return True
+        
+        print('waiting')
+        time.sleep(period)
+
+    print('timeout')
+    return False
+
 class N26(BaseApiAccess):
 
     provider = 'n26'
@@ -23,6 +43,8 @@ class MilesAndMore(BaseScrapper):
 
 
     def login(self, username, password):
+
+        wait_until(30)
 
         try:
             self.driver.get(self.url)

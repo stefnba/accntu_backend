@@ -82,7 +82,7 @@ class Parser(object):
         # get cell value
         cell_value = str(self.get_cell_value())
 
-        # print(self.field, cell_value)
+
 
         # make cell value to field_value
         c =  Cleaner(cell_value, self.field, field_map)

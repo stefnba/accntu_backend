@@ -27,8 +27,6 @@ class BaseScrapper(object):
 
         self.driver = webdriver.Chrome(options=chrome_options)
         
-        
-        
         # self.driver = webdriver.Chrome(executable_path=r'chromedriver')
 
         login = self.login(username, password)
@@ -39,9 +37,6 @@ class BaseScrapper(object):
         else:
             print('Login not successful')
             self.quit()
-
-
-    
 
 
     def transfer_cookies(self):

@@ -53,3 +53,22 @@ class ImportViaAPIRunning(APIView):
         }
 
         return Response(res, status=status.HTTP_201_CREATED)
+
+
+
+
+
+class Test(APIView):
+
+    def get(self, request):
+
+        tan_set = cache.get('my_key')
+        print(tan_set)
+
+        cache.set('my_key', 'hello, world!', 30)
+
+        tan_set = cache.get('my_key')
+        print(tan_set)
+
+        return Response("set", status=status.HTTP_200_OK)
+

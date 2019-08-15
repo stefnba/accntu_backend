@@ -82,9 +82,6 @@ class Cleaner(object):
             self.cleaned_value = str(Decimal(self.cleaned_value.replace('\'', '')))
             return True
 
-
-        print(self.cleaned_value)
-
         self.cleaned_value = str(Decimal(self.cleaned_value))
 
     def get_cleaned_value(self):

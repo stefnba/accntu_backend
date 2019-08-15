@@ -18,8 +18,6 @@ class BaseExtractor(object):
 
     def return_extracted_transactions(self):
 
-        print(self.data)
-
         csv = StringIO(self.data)
 
         try:
