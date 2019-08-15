@@ -48,6 +48,12 @@ class Account(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=255)
     provider = models.ForeignKey(Provider,on_delete=models.SET_NULL, blank=True, null=True)
+
+
+    login = models.CharField(max_length=255, blank=True, null=True)
+    login_sec = models.CharField(max_length=255, blank=True, null=True)
+    pin = models.CharField(max_length=255, blank=True, null=True)
+
     
     def __str__(self):
         return self.title

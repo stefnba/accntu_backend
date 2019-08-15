@@ -8,7 +8,6 @@ from .tasks import do_import
 
 # Create your views here.
 
-
 class ImportViaAPI(APIView):
 
     def get(self, request):
@@ -21,10 +20,12 @@ class ImportViaAPI(APIView):
 
     def post(self, request):
 
-        accounts = request.POST.get('accounts', None)
+        accounts = request.data.get('accounts', None)
+        user = request.user.id
 
         if accounts:
-            task = do_import.delay(accounts)
+            task = do_import.delay(accounts, user)
+
 
             res = {
                 'task_id': task.id,
