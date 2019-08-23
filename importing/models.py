@@ -43,7 +43,7 @@ def get_file_path(instance, filename):
                                             extension
                                         )
 
-    return 'imports/{}/{}/{:02d}/{}'.format(user, dt.year, dt.month, filename_new)
+    return 'imports/{}/{}/{:02d}/{}/{}'.format(user, dt.year, dt.month, account, filename_new)
 
 class NewImportOneAccount(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)

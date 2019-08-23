@@ -28,8 +28,6 @@ class MilesAndMore(BaseScrapper):
 
     provider = 'miles&more'
     url = 'https://www.miles-and-more.kartenabrechnung.de/'
-    skiprows = 6
-    sep = ';'
 
     def login(self, username, password, login_sec):
 
@@ -75,9 +73,6 @@ class DeutscheBank(BaseScrapper):
 
     provider = 'db'
     url = 'https://meine.deutsche-bank.de/'
-    skiprows = 4
-    sep = ';'
-    cutrows = 1
 
     def login(self, username, password, login_sec):
 

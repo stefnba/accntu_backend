@@ -120,30 +120,7 @@ class ImportViaAPITwoFactorRetrievePhotoTAN(APIView):
 class Test(APIView):
 
     def get(self, request):
-        
 
-        txt = """Buchungstag;Wert;Umsatzart;Beg¸nstigter / Auftraggeber;Verwendungszweck;IBAN;BIC;Kundenreferenz;Mandatsreferenz ;Gl‰ubiger ID;Fremde Geb¸hren;Betrag;Abweichender Empf‰nger;Anzahl der Auftr‰ge;Anzahl der Schecks;Soll;Haben;W‰hrung
-12.08.2019;12.08.2019;"Kartenzahlung";;YUM 2 TAKE//Muenchen/DE 09-08-2019T13:06:00 Folgenr. 09 Verfalld. 1223;;;;;;;;;;;-13,80;;EUR
-12.08.2019;12.08.2019;"SEPA-‹berweisung an";Stefan Jakob Bauer (N26);Transferred with Deutsche Bank Mobile;DE24100110012627811735;NTSBDEB1XXX;;;;;;;;;-1.000,00;;EUR
-12.08.2019;12.08.2019;"SEPA-‹berweisung an";Stefan """
-
-        # txt = '12.08.2019;12.08.2019'
-
-
-
-
-        myfile = ContentFile(str.encode(txt))
-            
-
-
-        a = NewImportOneAccount()
-        a.user_id = 1
-        a.account_id = 10
-
-        a.raw_csv.save("text.csv", myfile)
-
-        # a = NewImportOneAccount.objects.create(user_id=1, account_id=10, raw_csv=f)
-
-        return Response(txt, status=status.HTTP_201_CREATED)
+        return Response('txt', status=status.HTTP_201_CREATED)
         
 

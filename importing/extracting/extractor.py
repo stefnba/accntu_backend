@@ -27,7 +27,7 @@ class BaseExtractor(object):
             trans_dict = df.to_dict('records')
 
             # cut last rows in csv dict (e.g. Deutsche Bank)
-            if self.cutrows > 0:
+            if self.cutrows is not None and self.cutrows > 0:
                 trans_dict = trans_dict[:-self.cutrows]
 
             # add key to every transaction

@@ -1,6 +1,5 @@
 from celery import shared_task, current_task, task
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.files.base import ContentFile
 
 from decouple import config
 from pusher import Pusher
@@ -72,7 +71,8 @@ def do_import(self, accounts, user):
         """ if account exists, execute below """
         new_import_one_account = NewImportOneAccount.objects.create(
             user_id=user,
-            new_import = new_import
+            new_import = new_import,
+            account=account
         )
 
 
@@ -146,8 +146,8 @@ def do_import(self, accounts, user):
             # continue with next account
             continue
 
-
-        transactions_raw = retriever.get_raw_transactions()
+        print(account.provider.csv_meta)
+        transactions_raw = retriever.get_raw_transactions(import_id=new_import_one_account.pk, csv_meta=account.provider.csv_meta)
 
         nmbr_transactions = len(transactions_raw)
         

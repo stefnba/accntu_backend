@@ -1,3 +1,5 @@
+from django.core.files.base import ContentFile
+
 from explicit import waiter, ID
 from selenium import webdriver 
 from selenium.webdriver.common.by import By 
@@ -8,6 +10,7 @@ import urllib.parse as urlparse
 import requests
 
 from ...extracting.extractor import BaseExtractor
+from ...models import NewImportOneAccount
 
 
 class BaseScrapper(object):
@@ -84,7 +87,9 @@ class BaseScrapper(object):
         return csv
 
 
-    def get_raw_transactions(self):
+    def get_raw_transactions(self, **kwargs):
+
+        print(kwargs)
 
         # navigate to download page
         self.navigate()
@@ -96,7 +101,16 @@ class BaseScrapper(object):
 
         csv = self.download_csv()
 
-        print(csv)
+        # save csv to db
+        csv_file = ContentFile(str.encode(csv))
 
-        extracted = BaseExtractor(csv, self.sep, self.skiprows, self.cutrows)
+        c = NewImportOneAccount.objects.get(pk=kwargs['import_id'])
+        c.raw_csv.save("text.csv", csv_file)
+
+        csv_meta = kwargs.get('csv_meta', None)
+        sep = csv_meta.get('sep', None)
+        skiprows = csv_meta.get('skiprows', None)
+        cutrows = csv_meta.get('cutrows', None)
+
+        extracted = BaseExtractor(csv, sep, skiprows, cutrows)
         return extracted.return_extracted_transactions()

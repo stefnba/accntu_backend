@@ -25,7 +25,7 @@ class BaseApiAccess(object):
             return False
 
 
-    def get_raw_transactions(self):
+    def get_raw_transactions(self, **kwargs):
         headers = {'Authorization': 'bearer' + self.access_token}
 
         r = requests.get(self.url + '/api/smrt/transactions', headers=headers)
