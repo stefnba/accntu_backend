@@ -6,10 +6,11 @@ from io import StringIO
 
 class BaseExtractor(object):
 
-    def __init__(self, data, sep, skiprows):
+    def __init__(self, data, sep, skiprows, cutrows):
         self.data = data
         self.sep = sep
         self.skiprows = skiprows
+        self.cutrows = cutrows
 
 
         # key caching
@@ -24,6 +25,10 @@ class BaseExtractor(object):
 
             df = pd.read_csv(csv, sep=self.sep, skiprows=self.skiprows, na_filter=False, error_bad_lines=False)
             trans_dict = df.to_dict('records')
+
+            # cut last rows in csv dict (e.g. Deutsche Bank)
+            if self.cutrows > 0:
+                trans_dict = trans_dict[:-self.cutrows]
 
             # add key to every transaction
             return [self.add_key(transaction) for transaction in trans_dict]

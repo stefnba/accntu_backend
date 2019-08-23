@@ -4,7 +4,7 @@ from django.db import models
 from accounts.models import Account
 from budget.models import Label, Expense
 from business.models import Item
-from importing.models import NewImport
+from importing.models import NewImportOneAccount
 
 
 # Create your models here.
@@ -41,7 +41,7 @@ class Transaction(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
-    importing = models.ForeignKey(NewImport, on_delete=models.SET_NULL, blank=True, null=True)
+    importing = models.ForeignKey(NewImportOneAccount, on_delete=models.SET_NULL, blank=True, null=True)
     
     title = models.CharField(max_length=255)
     date = models.DateField()

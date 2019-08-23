@@ -1,84 +1,167 @@
 from celery import shared_task, current_task, task
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.base import ContentFile
 
-from selenium import webdriver 
+from decouple import config
+from pusher import Pusher
 from explicit import waiter, ID
+from selenium import webdriver 
 from selenium.webdriver.common.by import By 
 from selenium.webdriver.support.ui import Select
 
+import csv
 import requests
-
 import time
 
+
 from accounts.models import Account
-from .models import NewImport
+from .models import NewImport, NewImportOneAccount
 from .providers.providers import provider_classes
 from .parsing.parser import Parser
+from .providers.scrapping.utils import wait_for_tan
 from .serializers import ImportSerializer
+
+
+pusher_client = Pusher(
+  app_id=config(u'PUSHER_APP_ID'),
+  key=config(u'PUSHER_KEY'),
+  secret=config(u'PUSHER_SECRET'),
+  cluster=config(u'PUSHER_CLUSTER')
+)
+
+pusher_event_name = 'import_process'
+pusher_error_event_name = 'import_error'
+
+
+def import_error(task_id, msg):
+    print(msg)
+    
+    pusher_client.trigger(task_id, pusher_error_event_name, {
+        'message': msg
+    })
+    
+
 
 @task(bind=True)
 def do_import(self, accounts, user):
 
     importable_transactions = []
+    task_id = self.request.id.__str__()
+
+    # save new import
+    new_import = NewImport.objects.create(
+        user_id=user,
+    )
+
+    pusher_client.trigger(task_id, pusher_event_name, {
+        'message': 'Import Process has started ...'
+    })
     
     for account_id in list(accounts):
         
-        account = Account.objects.get(id=account_id)
+        try: 
+            account = Account.objects.get(id=account_id)
+        except ObjectDoesNotExist: 
+            
+            import_error(task_id, "Account {} doesn't exist!".format(account_id))
+
+            # continue with next account
+            continue
+
+
+        """ if account exists, execute below """
+        new_import_one_account = NewImportOneAccount.objects.create(
+            user_id=user,
+            new_import = new_import
+        )
+
+
         key = account.provider.key
 
         # credentials
-        # TODO encryption
         login = account.login
         login_sec = account.login_sec
         pin = account.pin
 
+        # TODO encryption
 
         Provider = provider_classes[key]
 
-        self.update_state(
-            state='PROGRESS',
-            meta={
-                'msg': 'Initiated import of {}'.format(account.title)
-            }
-        )
+        pusher_client.trigger(task_id, pusher_event_name, {
+            'message': '{}: import initiated ...'.format(account.title)
+        })
             
         # actual retrival of transactions through API or scrapping
-        retriever = Provider(login, pin)
+        retriever = Provider()
+
+        # account login
+        login = retriever.login(login, pin, login_sec)
+
+        # check and execute two factor
+        if hasattr(retriever, 'login_two_factor'):
+
+            url = retriever.login_two_factor(user, account_id)
+
+            pusher_client.trigger(task_id, pusher_event_name, {
+                'message': '{}: waiting for Two-Factor Auth...'.format(account.title)
+            })
+            
+            pusher_client.trigger(task_id, 'two_factor', {
+                'two_factor': {
+                    'account': account_id,
+                    'task': task_id,
+                    'tan_id': url
+                }
+            })
+
+            tan = wait_for_tan(user, account_id, task_id)
+
+            if tan:
+                pusher_client.trigger(task_id, pusher_event_name, {
+                    'message': '{}: TAN submitted...'.format(account.title)
+                })
+                
+                retriever.login_two_factor_submit_tan(tan)
+            
+            else:
+                login = False
+
+                import_error(task_id, "{}: TAN submission failed!".format(account.title))
+                
+                # continue with next account
+                continue
 
 
-        # LOGIN
+        if login:
+
+            pusher_client.trigger(task_id, pusher_event_name, {
+                'message': '{}: login successful!'.format(account.title)
+            })
+
+        
+        # if login not successful
+        else:
+            import_error(task_id, "{}: login not successful!".format(account.title))
+            
+            # continue with next account
+            continue
 
 
+        transactions_raw = retriever.get_raw_transactions()
 
-        # if login true, then send update -> login must return true/false
+        nmbr_transactions = len(transactions_raw)
+        
+        if nmbr_transactions > 0:
+            pusher_client.trigger(task_id, pusher_event_name, {
+                'message': '{}: {} transactions retrieved'.format(account.title, len(transactions_raw))
+            })
 
-        # if 2factor, then call that method
+        else:
+            import_error(task_id, "{}: no transactions retrieved!".format(account.title))
 
+            # continue with next account
+            continue
 
-
-
-
-
-
-        # TODO LOGIN
-        self.update_state(
-            state='PROGRESS',
-            meta={
-                'msg': 'Successfully logged in'
-            }
-        )
-
-        time.sleep(0.5)
-
-
-        # TODO transactions retrieved
-        transactions_raw = retriever.return_transactions()
-
-        self.update_state(
-            state='PROGRESS',
-            meta={
-                'msg': '{} transactions retrieved'.format(len(transactions_raw))
-            }
-        )
 
         # parse raw transactions into importable transactions
         parser = Parser(
@@ -89,11 +172,27 @@ def do_import(self, accounts, user):
         )
         account_transactions = parser.return_parsed()
 
+        pusher_client.trigger(task_id, pusher_event_name, {
+                'message': '{}: transactions parsed'.format(account.title)
+            })
+
+        # update account import
+        # TODO has all transaction, should be only unique ones
+        new_import_one_account.import_success = True
+        new_import_one_account.nmbr_transactions = len(account_transactions)
+        new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions'])
 
         # append retrieved transactions for given account
         importable_transactions.extend(account_transactions)
 
-    # TODO import transactions
+    """ Import transactions """
+
+
+    pusher_client.trigger(task_id, pusher_event_name, {
+        'message': 'Preparing importing of {} transactions'.format(nmbr_transactions)
+    })
+
+
     serializer = ImportSerializer(
         data=importable_transactions,
         many=True, 
@@ -101,35 +200,34 @@ def do_import(self, accounts, user):
     )
 
     if serializer.is_valid():
-        
-        # save new import
-        new_import = NewImport.objects.create(
-            user_id=user,
-        )
 
         # save transactions
         saved = serializer.save(
             user_id=user,
-            importing=new_import
+            importing=new_import_one_account
         )
 
         saved = [t for t in saved if t is not False]
-        res = {
+        nmbr_transactions = len(saved)
+
+
+        # update entire import
+        new_import.import_success = True
+        new_import.nmbr_transactions = nmbr_transactions
+        new_import.save(update_fields=['import_success', 'nmbr_transactions'])
+
+
+        pusher_client.trigger(task_id, pusher_event_name, {
+            'message': 'Import successful'
+        })
+
+        return {
             'transactions': 'to come',
-            'nmbr': len(saved)
+            'nmbr': nmbr_transactions
         }
 
-        self.update_state(
-            state='PROGRESS',
-            meta={
-                'msg': '{} transactions imported'.format(len(saved))
-            }
-        )
 
-        time.sleep(0.5)
-
-        return res
-
+    import_error(task_id, "There was a problem. Transactions couldn't be imported!")
     print('not valid')
     print(serializer.errors)
 

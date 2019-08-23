@@ -15,28 +15,17 @@ class BaseScrapper(object):
     url = None
     skiprows = None
     sep = None  
+    cutrows = 0
 
-    def __init__(self, username, password):
+    def __init__(self):
         
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument('--no-sandbox')
         prefs={"profile.managed_default_content_settings.images": 2}
         chrome_options.add_experimental_option('prefs', prefs)
         chrome_options.add_argument('--headless')
-        # chrome_options.add_argument('--disable-dev-shm-usage')
 
         self.driver = webdriver.Chrome(options=chrome_options)
-        
-        # self.driver = webdriver.Chrome(executable_path=r'chromedriver')
-
-        login = self.login(username, password)
-        if login:
-            self.navigate()
-            self.extend_period()
-            self.t = self.download()
-        else:
-            print('Login not successful')
-            self.quit()
 
 
     def transfer_cookies(self):
@@ -58,23 +47,56 @@ class BaseScrapper(object):
         return urlparse.parse_qs(parsed.query)
 
 
-    def request_csv(self, url=None, data=None, cookies=None, params=None):
-        r = requests.post(url, data=data, params=params, cookies=cookies)
-        return r.text
-
-    def return_transactions(self):
-        
-        # TODO CSV EXTRACTION 
-        t = self.t
-
-        self.quit()
-
-        extracted = BaseExtractor(t, self.sep, self.skiprows)
-
-        # print(extracted.return_extracted_transactions())
-
-        return extracted.return_extracted_transactions()
-
-
-    def quit(self):
+    def quit_driver(self):
         self.driver.quit()
+
+
+    def navigate(self):
+        # placeholder method
+        return True
+
+    
+    def pre_download(self):
+        # placeholder method
+        return {}
+
+
+    def extend_period(self):
+        # placeholder method
+        return True
+
+
+    def download_csv(self):
+        pre = self.pre_download()
+
+        url = pre.get('url', None)
+        data = pre.get('data', None)
+        params = pre.get('params', None)
+
+        cookies = self.transfer_cookies()
+
+        r = requests.post(url, data=data, params=params, cookies=cookies)
+        csv = r.text
+
+        # quite driver
+        self.quit_driver()
+
+        return csv
+
+
+    def get_raw_transactions(self):
+
+        # navigate to download page
+        self.navigate()
+
+        # extend period
+        extend = self.extend_period()
+        if not extend:
+            return []
+
+        csv = self.download_csv()
+
+        print(csv)
+
+        extracted = BaseExtractor(csv, self.sep, self.skiprows, self.cutrows)
+        return extracted.return_extracted_transactions()
