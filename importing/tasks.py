@@ -8,9 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By 
 from selenium.webdriver.support.ui import Select
 
-import csv
-import requests
-import time
+import csv, requests, time, threading
 
 
 from accounts.models import Account
@@ -38,6 +36,138 @@ def import_error(task_id, msg):
     pusher_client.trigger(task_id, pusher_error_event_name, {
         'message': msg
     })
+
+
+
+def retrieve_account_transactions(user, account_id, task_id, new_import, importable_transactions):
+    try: 
+        account = Account.objects.get(id=account_id)
+    except ObjectDoesNotExist: 
+        
+        import_error(task_id, "Account {} doesn't exist!".format(account_id))
+
+        # continue with next account
+        return []
+
+
+    """ if account exists, execute below """
+    new_import_one_account = NewImportOneAccount.objects.create(
+        user_id=user,
+        new_import = new_import,
+        account=account
+    )
+
+
+    key = account.provider.key
+
+    # credentials
+    login = account.login
+    login_sec = account.login_sec
+    pin = account.pin
+
+    # TODO encryption
+
+    Provider = provider_classes[key]
+
+    pusher_client.trigger(task_id, pusher_event_name, {
+        'message': '{}: import initiated ...'.format(account.title)
+    })
+        
+    # actual retrival of transactions through API or scrapping
+    retriever = Provider()
+
+    # account login
+    login = retriever.login(login, pin, login_sec)
+
+    # check and execute two factor
+    if hasattr(retriever, 'login_two_factor'):
+
+        url = retriever.login_two_factor(user, account_id)
+
+        pusher_client.trigger(task_id, pusher_event_name, {
+            'message': '{}: waiting for Two-Factor Auth...'.format(account.title)
+        })
+        
+        pusher_client.trigger(task_id, 'two_factor', {
+            'two_factor': {
+                'account': account_id,
+                'task': task_id,
+                'tan_id': url
+            }
+        })
+
+        tan = wait_for_tan(user, account_id, task_id)
+
+        if tan:
+            pusher_client.trigger(task_id, pusher_event_name, {
+                'message': '{}: TAN submitted...'.format(account.title)
+            })
+            
+            retriever.login_two_factor_submit_tan(tan)
+        
+        else:
+            login = False
+
+            import_error(task_id, "{}: TAN submission failed!".format(account.title))
+            
+            # continue with next account
+            return []
+
+
+    if login:
+
+        pusher_client.trigger(task_id, pusher_event_name, {
+            'message': '{}: login successful!'.format(account.title)
+        })
+
+    
+    # if login not successful
+    else:
+        import_error(task_id, "{}: login not successful!".format(account.title))
+        
+        # continue with next account
+        return []
+
+    transactions_raw = retriever.get_raw_transactions(import_id=new_import_one_account.pk, csv_meta=account.provider.csv_meta)
+
+    nmbr_transactions = len(transactions_raw)
+    
+    if nmbr_transactions > 0:
+        pusher_client.trigger(task_id, pusher_event_name, {
+            'message': '{}: {} transactions retrieved'.format(account.title, len(transactions_raw))
+        })
+
+    else:
+        import_error(task_id, "{}: no transactions retrieved!".format(account.title))
+
+        # continue with next account
+        return []
+
+
+    # parse raw transactions into importable transactions
+    parser = Parser(
+        data=transactions_raw,
+        account=account_id,
+        parser_map=account.provider.parser_map,
+        provider=key
+    )
+    account_transactions = parser.return_parsed()
+
+    pusher_client.trigger(task_id, pusher_event_name, {
+            'message': '{}: transactions parsed'.format(account.title)
+        })
+
+    # update account import
+    # TODO has all transaction, should be only unique ones
+    new_import_one_account.import_success = True
+    new_import_one_account.nmbr_transactions = len(account_transactions)
+    new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions'])
+
+    # add importing id for each transaction
+    account_transactions = [dict(item, **{'importing': new_import_one_account.id }) for item in account_transactions]
+
+
+    importable_transactions.extend(account_transactions)
     
 
 
@@ -53,145 +183,26 @@ def do_import(self, accounts, user):
     )
 
     pusher_client.trigger(task_id, pusher_event_name, {
-        'message': 'Import Process has started ...'
+        'message': 'Import process has started ...'
     })
+
+
+    threads = []
     
     for account_id in list(accounts):
-        
-        try: 
-            account = Account.objects.get(id=account_id)
-        except ObjectDoesNotExist: 
-            
-            import_error(task_id, "Account {} doesn't exist!".format(account_id))
+        thread = threading.Thread(target=retrieve_account_transactions, args=(user, account_id, task_id, new_import, importable_transactions))
+        threads.append(thread)
+        thread.start()
 
-            # continue with next account
-            continue
-
-
-        """ if account exists, execute below """
-        new_import_one_account = NewImportOneAccount.objects.create(
-            user_id=user,
-            new_import = new_import,
-            account=account
-        )
-
-
-        key = account.provider.key
-
-        # credentials
-        login = account.login
-        login_sec = account.login_sec
-        pin = account.pin
-
-        # TODO encryption
-
-        Provider = provider_classes[key]
-
-        pusher_client.trigger(task_id, pusher_event_name, {
-            'message': '{}: import initiated ...'.format(account.title)
-        })
-            
-        # actual retrival of transactions through API or scrapping
-        retriever = Provider()
-
-        # account login
-        login = retriever.login(login, pin, login_sec)
-
-        # check and execute two factor
-        if hasattr(retriever, 'login_two_factor'):
-
-            url = retriever.login_two_factor(user, account_id)
-
-            pusher_client.trigger(task_id, pusher_event_name, {
-                'message': '{}: waiting for Two-Factor Auth...'.format(account.title)
-            })
-            
-            pusher_client.trigger(task_id, 'two_factor', {
-                'two_factor': {
-                    'account': account_id,
-                    'task': task_id,
-                    'tan_id': url
-                }
-            })
-
-            tan = wait_for_tan(user, account_id, task_id)
-
-            if tan:
-                pusher_client.trigger(task_id, pusher_event_name, {
-                    'message': '{}: TAN submitted...'.format(account.title)
-                })
-                
-                retriever.login_two_factor_submit_tan(tan)
-            
-            else:
-                login = False
-
-                import_error(task_id, "{}: TAN submission failed!".format(account.title))
-                
-                # continue with next account
-                continue
-
-
-        if login:
-
-            pusher_client.trigger(task_id, pusher_event_name, {
-                'message': '{}: login successful!'.format(account.title)
-            })
-
-        
-        # if login not successful
-        else:
-            import_error(task_id, "{}: login not successful!".format(account.title))
-            
-            # continue with next account
-            continue
-
-        print(account.provider.csv_meta)
-        transactions_raw = retriever.get_raw_transactions(import_id=new_import_one_account.pk, csv_meta=account.provider.csv_meta)
-
-        nmbr_transactions = len(transactions_raw)
-        
-        if nmbr_transactions > 0:
-            pusher_client.trigger(task_id, pusher_event_name, {
-                'message': '{}: {} transactions retrieved'.format(account.title, len(transactions_raw))
-            })
-
-        else:
-            import_error(task_id, "{}: no transactions retrieved!".format(account.title))
-
-            # continue with next account
-            continue
-
-
-        # parse raw transactions into importable transactions
-        parser = Parser(
-            data=transactions_raw,
-            account=account_id,
-            parser_map=account.provider.parser_map,
-            provider=key
-        )
-        account_transactions = parser.return_parsed()
-
-        pusher_client.trigger(task_id, pusher_event_name, {
-                'message': '{}: transactions parsed'.format(account.title)
-            })
-
-        # update account import
-        # TODO has all transaction, should be only unique ones
-        new_import_one_account.import_success = True
-        new_import_one_account.nmbr_transactions = len(account_transactions)
-        new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions'])
-
-        # append retrieved transactions for given account
-        importable_transactions.extend(account_transactions)
+    # wait until all retrieving has finished
+    for thread in threads: 
+        thread.join()
 
     """ Import transactions """
 
-
     pusher_client.trigger(task_id, pusher_event_name, {
-        'message': 'Preparing importing of {} transactions'.format(nmbr_transactions)
+        'message': 'Preparing importing of {} transactions'.format(len(importable_transactions))
     })
-
 
     serializer = ImportSerializer(
         data=importable_transactions,
@@ -204,7 +215,7 @@ def do_import(self, accounts, user):
         # save transactions
         saved = serializer.save(
             user_id=user,
-            importing=new_import_one_account
+            # importing=new_import_one_account
         )
 
         saved = [t for t in saved if t is not False]
