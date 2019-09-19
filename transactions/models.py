@@ -53,7 +53,7 @@ class Transaction(models.Model):
     country = models.CharField(max_length=3, blank=True, null=True)
     
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=10, blank=True, null=True) 
-    label = models.ForeignKey(Label, on_delete=models.SET_NULL, blank=True, null=True)
+    label = models.ForeignKey(Label, on_delete=models.SET_NULL, blank=True, null=True, related_name='label')
     # tags
     # bucket 
     # business_report
@@ -82,35 +82,47 @@ class Transaction(models.Model):
         return self.title
 
 
-    prev_category = None
+    # prev_category = None
     def __init__(self, *args, **kwargs):
         super(Transaction, self).__init__(*args, **kwargs)
         self.prev_category = self.category
 
     def save(self, *args, **kwargs):
 
-        # print('prev', self.prev_category, 'kk')
-        # print('now', self.category)
+        prev = str(self.prev_category).strip()
+        current = str(self.category).strip()
 
-        if self.prev_category is not self.category:
-            print('changed')
+        if current is not prev:
+            print('Change')
 
-            if self.prev_category is 'business':
-                print('was b')
+            # delete old private
+            if prev == 'private':
+                print('Delete old private')
+                try:
+                    instance = Expense.objects.get(pk=self.id)
+                    instance.delete()
+                except Expense.DoesNotExist:
+                    print('item does not exist')
+                    pass
 
-            if self.category is not 'business':
-                print('delete')
+            # create new private
+            if current == 'private':
+                print('Make new private')
+                instance = Expense.objects.create(pk=self.id, budget_amount=self.user_amount)
+
+            #  delete old business
+            if prev == 'business':
+                print('Delete old business')
+
                 try:
                     instance = Item.objects.get(pk=self.id)
                     instance.delete()
                 except Item.DoesNotExist:
                     pass
-                
 
-            if self.category is 'business':
+            #  create new business
+            if current == 'business':
                 instance = Item.objects.create(pk=self.id, report_amount=self.user_amount)
 
-            if self.category is 'private':
-                instance = Expense.objects.create(pk=self.id, budget_amount=self.user_amount)
 
         super().save(*args, **kwargs)

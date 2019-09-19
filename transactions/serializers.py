@@ -5,14 +5,45 @@ from .models import (
 )
 
 from accounts.models import Account
+from budget.models import Bucket, Label
+
 
 class AccountForTransactionListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ('id', 'title',)
 
+
+class BucketForTransactionListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bucket
+        fields = ('title', )
+
+class LabelForTransactionListSerializer(serializers.ModelSerializer):
+    bucket = BucketForTransactionListSerializer(read_only=True) 
+    
+    class Meta:
+        model = Label
+        fields = ('id', 'title', 'bucket', 'icon')
+
+
+    def to_representation(self, instance):
+        data = super(LabelForTransactionListSerializer, self).to_representation(instance)
+
+        bucket = data.pop('bucket')
+
+        # if label has no bucket
+        if bucket is None:
+            return data
+
+        for key, val in bucket.items():
+            # use 'bucket' as key is tile and is already used for label
+            data.update({'bucket': val})
+        return data
+
 class TransactionListSerializer(serializers.ModelSerializer):
     account = AccountForTransactionListSerializer(read_only=True) 
+    label = LabelForTransactionListSerializer(read_only=True) 
     
     class Meta:
         model = Transaction
@@ -37,6 +68,8 @@ class TransactionListSerializer(serializers.ModelSerializer):
             'user_amount',
             'user_currency',
             'account',
+            'is_new',
+            'label',
         )
         
 
@@ -121,5 +154,35 @@ class TransactionBulkUpdateSerializer(serializers.ModelSerializer):
             'title',
             'category',
             'status',
+            'is_new',
         )
         list_serializer_class = TransactionBulkListSerializer
+
+
+
+
+#  Transaction One To One for budget and business
+###########################
+
+class TransactionOneToOneSerializer(serializers.ModelSerializer):
+    """ Fields from Transaction models for one to one relationship with Expense model """
+
+    account = AccountForTransactionListSerializer(read_only=True) 
+    label = LabelForTransactionListSerializer(read_only=True) 
+    
+    class Meta:
+        model = Transaction
+        fields = (
+            'id',
+            'title',
+            'date',
+            'account',
+            'account_amount',
+            'spending_amount',
+            'spending_currency',
+            'account_amount',
+            'account_currency',
+            'user_amount',
+            'user_currency',
+            'label',
+        )
