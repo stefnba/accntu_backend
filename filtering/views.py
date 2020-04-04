@@ -30,8 +30,8 @@ FILTER_FIELDS_NESTED = {
     'account': {
         'title': 'account__title'
     },
-    'label': {
-        'title': 'label__title'
+    'expense': {
+        'title': 'expense__label__title'
     },
 }
 
@@ -41,10 +41,6 @@ class Filtering(ListModelMixin, GenericAPIView):
     filterset_class = TransactionFilterSet
 
     def list(self, request, *args, **kwargs):
-
-
-        print(Transaction.CATEGORY_CHOICES)
-
 
         qs = self.filter_queryset(self.get_queryset())
 

@@ -21,7 +21,7 @@ FILTER_FIELDS = (
     'spending_currency', 
     'status',
     'category',
-    'label',
+    'expense__label',
 )
 
 

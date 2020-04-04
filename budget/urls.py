@@ -9,6 +9,7 @@ from .views import (
     LabelRetrieveUpdateDestroy,
     IconRetrive,
     IconList,
+    ExpenseBulkUpdate,
 )
 
 app_name = "budget"
@@ -18,6 +19,7 @@ urlpatterns = [
     
     # Expenses
     path('expenses/', BudgetTransactionList.as_view(), name='expense-list'),
+    path('expenses/update/', ExpenseBulkUpdate.as_view(), name='expense-bulk-udpate'),
     
     # Labels
     path('labels/create/', LabelCreate.as_view(), name='label-create'),
@@ -30,5 +32,5 @@ urlpatterns = [
     
     # icons
     path('icons/', IconList.as_view(), name='icon-list'),
-    path('icons/<str:name>/', IconRetrive.as_view(), name='icon-retrieve'),
+    path('icons/<str:pk>/', IconRetrive.as_view(), name='icon-retrieve'),
 ]

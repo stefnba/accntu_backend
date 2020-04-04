@@ -31,6 +31,7 @@ from .serializers import (
     LabelListSerializer,
     LabelRetrieveUpdateDestroySerializer,
     LabelCreateSerializer,
+    ExpenseBulkUpdateSerializer,
 )
 
 # Create your views here.
@@ -114,9 +115,9 @@ class IconList(ListAPIView):
 class IconRetrive(APIView):
     """ Get single icon by name """
 
-    def get(self, request, name):
+    def get(self, request, pk):
         try:
-            img = Icon.objects.get(name=name).icon
+            img = Icon.objects.get(pk=pk).icon_svg
 
             return HttpResponse(img, content_type="image/svg+xml")
 
@@ -128,6 +129,21 @@ class IconRetrive(APIView):
 
 # Expense
 ###########################
+
+class ExpenseBulkUpdate(APIView):
+
+    def post(self, request, format=None):
+        queryset = Expense.objects.all()
+        serializer = ExpenseBulkUpdateSerializer(queryset, data=request.data, many=True, partial=True)
+        if serializer.is_valid():
+            saved = serializer.save()
+            return Response({
+                'length': len(saved)
+            },  status=status.HTTP_201_CREATED)
+        
+        return Response('Update failed', status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 class BudgetListFilteredByPeriod(ListAPIView):

@@ -53,10 +53,8 @@ class Transaction(models.Model):
     country = models.CharField(max_length=3, blank=True, null=True)
     
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=10, blank=True, null=True) 
-    label = models.ForeignKey(Label, on_delete=models.SET_NULL, blank=True, null=True, related_name='label')
+    # label = models.ForeignKey(Label, on_delete=models.SET_NULL, blank=True, null=True, related_name='label')
     # tags
-    # bucket 
-    # business_report
     status = models.CharField(choices=STATUS_CHOICES, max_length=10) 
     note = models.CharField(max_length=255, blank=True, null=True)
 
@@ -92,7 +90,7 @@ class Transaction(models.Model):
         prev = str(self.prev_category).strip()
         current = str(self.category).strip()
 
-        if current is not prev:
+        if current != prev:
             print('Change')
 
             # delete old private

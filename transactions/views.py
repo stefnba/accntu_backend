@@ -61,5 +61,6 @@ class TransactionBulkUpdate(APIView):
                 'length': len(saved)
             },  status=status.HTTP_201_CREATED)
         
+        print(serializer.data)
         return Response('Update failed', status=status.HTTP_400_BAD_REQUEST)
 

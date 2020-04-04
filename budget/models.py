@@ -59,3 +59,4 @@ class Expense(models.Model):
     transaction = models.OneToOneField(to='transactions.Transaction', on_delete=models.CASCADE, primary_key=True)
     active = models.BooleanField(default=True)
     budget_amount = models.DecimalField(decimal_places=2, max_digits=1000, default=0)
+    label = models.ForeignKey(Label, on_delete=models.SET_NULL, blank=True, null=True, related_name='label')

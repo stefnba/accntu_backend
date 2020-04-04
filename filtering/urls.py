@@ -8,5 +8,5 @@ app_name = "filtering"
 
 
 urlpatterns = [
-    path('options/', Filtering.as_view(), name='date-list'),
+    path('options/', Filtering.as_view(), name='filter-options'),
 ]
