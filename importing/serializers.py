@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 
@@ -19,8 +20,13 @@ class ImportSerializer(serializers.ModelSerializer):
         # get user, and user_currency
         user = self.context.get('user', None)
 
-        user_currency = Settings.objects.get(user_id=user).user_currency
-        
+        try:
+            user_currency = Settings.objects.get(user_id=user).user_currency
+        except ObjectDoesNotExist:
+            print(user)
+            return False
+
+
         # FX conversion
         fx = FXRate(data['date'], data['account_currency'], user_currency)
 

@@ -19,9 +19,18 @@ from decouple import config
 from pusher import Pusher
 
 
+# for test
+# from .parsing.parser import ParserNew
+# from accounts.models import Account
+
+
 # Create your views here.
 
 class ImportViaAPI(APIView):
+    """
+    GET: List all importable accounts for given user
+    POST: Initiate new import process for provided accounts
+    """
 
     def get(self, request):
         
@@ -36,21 +45,33 @@ class ImportViaAPI(APIView):
         accounts = request.data.get('accounts', None)
         user = request.user.id
 
-        if accounts:
+        # TODO remove here
+        # accounts = [14]
+        accounts = [18]
+        user = 1
+
+        if accounts and user:
+            # start import process in tasks.py
             task = do_import.delay(accounts, user)
             
             res = {
                 'task_id': task.id,
             }
 
+            # return task id -> can be queried with view ImportViaAPIRunning
             return Response(res, status=status.HTTP_201_CREATED)
 
         return Response({
-            'err_msg': 'No accounts provided!'
+            'err_msg': 'No accounts provided!',
+            'error': 'NO_ACCOUNTS'
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
+
 class ImportViaAPIRunning(APIView):
+    """
+    Get status of running task based on task id
+    """
 
     def get(self, request, task_id):
 
@@ -121,6 +142,24 @@ class Test(APIView):
 
     def get(self, request):
 
+        # account_id = 14
+
+        # qs = Account.objects.get(id=account_id)
+
+        # parser_dict = qs.provider.csvxls_import.__dict__
+
+
+        # account = {
+        #     'account_id': account_id,
+        #     'account_name': 'Barclaycard'
+        # }
+        
+        # # p = Parser(parser_dict=parser_dict, file='importing/Barclaycard.xlsx', account=account)
+        # p = ParserNew(parser_dict=parser_dict, file='importing/M&M.csv', account=account)
+        # data_parsed = p.parse()
+        
+        
+        # print(data_parsed)
         return Response('txt', status=status.HTTP_201_CREATED)
         
 

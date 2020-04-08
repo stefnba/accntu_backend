@@ -4,7 +4,9 @@ from django.contrib import admin
 from .models import (
     NewImport,
     NewImportOneAccount,
+    CsvXlsImportDetails
 )
 
 admin.site.register(NewImport)
 admin.site.register(NewImportOneAccount)
+admin.site.register(CsvXlsImportDetails)
