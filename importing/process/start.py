@@ -133,6 +133,8 @@ def retrieve_account_transactions(
     # returns dict
     transactions_parsed = parser.parse()
 
+    # print(parser.raw_csv())
+
     # trigger parsed msg
     pusher_trigger(
         task_id,
@@ -146,7 +148,11 @@ def retrieve_account_transactions(
         
     new_import_one_account.import_success = True
     new_import_one_account.nmbr_transactions = len(transactions_parsed)
-    new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions'])
+    new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions', 'raw_csv'])
+    
+    # save raw and parsed csv file to db (file is used to distinguish both files)
+    new_import_one_account.raw_csv.save('raw', parser.save_csv('raw'))
+    new_import_one_account.parsed_csv.save('parsed', parser.save_csv('parsed'))
 
 
     # final step: append transactions of that account to list importable_transactions

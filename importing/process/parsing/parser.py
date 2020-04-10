@@ -248,24 +248,27 @@ class Parser(object):
         # to parsing
         self._initiate_parsing_process()
 
-        # save parsed file
-        self.to_csv(self.df, 'parsed')
-
         # return parsed transactions for given account (returns dict)
         return self.df.to_dict('records')
 
     
-    def to_csv(self, df, mode):
+    
 
-        loc = 'importing/imports/' + self.account['account_name'] + '/'
-        now = datetime.now().strftime("%Y%m%d-%I%M")
-        filename = str(now + '_' + mode + '.csv')
 
-        # make dir
-        os.makedirs(loc, exist_ok=True)
+    def save_csv(self, type):
+        buf = StringIO()
 
-        # save df to csv
-        df.to_csv(loc + filename)
+        if type == 'raw':
+            self.import_df.to_csv(buf)
+        
+        if type == 'parsed':
+            self.df.to_csv(buf)
+
+        buf.seek(0)
+
+        return buf
+
+
 
 
 

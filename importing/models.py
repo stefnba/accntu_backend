@@ -128,7 +128,7 @@ def get_file_path(instance, filename):
     user = instance.user.id
 
     extension = os.path.splitext(filename)[1:]
-    filename_new = "{}_{}{:02d}{:02d}_{:02d}{:02d}{:02d}{}".format(
+    filename_new = "{}_{}{:02d}{:02d}_{:02d}{:02d}{:02d}_{}.csv".format(
                                             account, 
                                             dt.year, 
                                             dt.month, 
@@ -136,7 +136,7 @@ def get_file_path(instance, filename):
                                             dt.hour, 
                                             dt.minute, 
                                             dt.second, 
-                                            extension
+                                            filename
                                         )
 
     return 'imports/{}/{}/{:02d}/{}/{}'.format(user, dt.year, dt.month, account, filename_new)
@@ -149,6 +149,7 @@ class NewImportOneAccount(models.Model):
     new_import = models.ForeignKey(NewImport, on_delete=models.SET_NULL, blank=True, null=True)
     import_success = models.BooleanField(default=False)
     raw_csv = models.FileField(upload_to=get_file_path, blank=True, null=True)
+    parsed_csv = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
     class Meta:
         ordering = ['imported_at',]

@@ -4,9 +4,11 @@ from django.contrib import admin
 from .models import (
     NewImport,
     NewImportOneAccount,
-    CsvXlsImportDetails
+    CsvXlsImportDetails,
+    PhotoTAN
 )
 
 admin.site.register(NewImport)
 admin.site.register(NewImportOneAccount)
 admin.site.register(CsvXlsImportDetails)
+admin.site.register(PhotoTAN)
