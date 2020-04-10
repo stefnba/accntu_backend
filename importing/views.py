@@ -19,11 +19,6 @@ from decouple import config
 from pusher import Pusher
 
 
-# for test
-# from .parsing.parser import ParserNew
-# from accounts.models import Account
-
-
 # Create your views here.
 
 class ImportViaAPI(APIView):

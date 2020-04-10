@@ -232,12 +232,9 @@ class Parser(object):
 
         # Create key with occs and assign to transaction
         self.df['all_cols'] = self.import_df.astype(str).values.sum(axis=1)
-        counts = self.df['all_cols'].value_counts()
-        count_col = self.df['all_cols'].map(counts)
-        self.df['all_cols'] = self.df['all_cols'] + str(count_col)
-        self.df['hash_duplicate'] = self.df['all_cols'].apply(lambda item: hashlib.md5((item).encode('utf-8')).hexdigest())
-        
-        self.df = self.df.drop(columns=['all_cols'])
+        self.df['cum_count'] = self.df.groupby('all_cols').cumcount().astype(str)
+        key = self.df['all_cols'] + self.df['cum_count']
+        self.df['hash_duplicate'] = key.apply(lambda item: hashlib.md5((item).encode('utf-8')).hexdigest())
 
 
     def parse(self):

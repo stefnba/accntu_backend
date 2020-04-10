@@ -1,14 +1,15 @@
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.forms import model_to_dict
 from explicit import waiter, ID
 from selenium import webdriver 
 from selenium.webdriver.common.by import By 
 from selenium.webdriver.support.ui import Select
 
 from accounts.models import Account
-from ..models import NewImport, NewImportOneAccount
+from ..models import NewImport, NewImportOneAccount, CsvXlsImportDetails
 
-from ..providers.providers import provider_classes
+# from ..providers.providers import provider_classes
 
 
 from .parsing.parser import Parser
@@ -30,23 +31,13 @@ def retrieve_account_transactions(
     """
 
     # retrieve account info
-    try: 
-        account = Account.objects.get(id=account_id)
-    
-    except ObjectDoesNotExist: 
-        pusher_trigger(
-            task_id,
-            'import_error',
-            "Account {} doesn't exist!".format(account_id)
-        )
+    account = Account.objects.filter(id=account_id).first()
 
-        # continue with next account, return zero transactions
+    # continue with next account, return zero transactions
+    if not account:
+        print('no account found')
         return []
 
-
-    """
-    If account exists, execute below
-    """
     
     # create db object in model NewImportOneAccount for import of this account
     new_import_one_account = NewImportOneAccount.objects.create(
@@ -69,13 +60,27 @@ def retrieve_account_transactions(
     Web scraping access
     """
     if account.provider.access_type == 'scr':
+        
+        parser_qs = CsvXlsImportDetails.objects.filter(provider__account__id=account_id).first()
+
+        # no parser found in db
+        if not parser_qs:
+            return []
+
+        parser_dict = model_to_dict(parser_qs)
+
+
+
+
         transactions_raw = """ "Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
+"DE73795500000240762302";"01.04.20";"01.04.20";"FOLGELASTSCHRIFT";"STUDIENKREDIT DA14546041 AUSZAHLUNG 0,00 ZINS 8,50 TILG 23,53 APL 0,00 GEBUEHR 0,00 ";"DE44ZZZ00000002378";"9347108";"";"";"";"";"KFW                                                                   PALMENGARTENSTR. 5 - 9";"DE32500204001406328080";"KFWIDEFFXXX";"-32,03";"EUR";"Umsatz gebucht"
 "DE73795500000240762302";"01.04.20";"01.04.20";"FOLGELASTSCHRIFT";"STUDIENKREDIT DA14546041 AUSZAHLUNG 0,00 ZINS 8,50 TILG 23,53 APL 0,00 GEBUEHR 0,00 ";"DE44ZZZ00000002378";"9347108";"";"";"";"";"KFW                                                                   PALMENGARTENSTR. 5 - 9";"DE32500204001406328080";"KFWIDEFFXXX";"-32,03";"EUR";"Umsatz gebucht"
 "DE73795500000240762302";"01.04.20";"01.04.20";"FOLGELASTSCHRIFT";"Versicherungsnr. 404086472 Beitrag Auslandsschutz ";"DE16ZZZ00000028684";"18MREF000000000962715";"DEZY1820200320015305000187186";"";"";"";"Envivas Krankenversicherung AG";"DE51370700600119081801";"DEUTDEDKXXX";"-15,50";"EUR";"Umsatz gebucht"
 "DE73795500000240762302";"01.04.20";"01.04.20";"ABSCHLUSS";"Abrechnung 31.03.2020 siehe Anlage ";"";"";"";"";"";"";"";"0000000000";"79550000";"-17,89";"EUR";"Umsatz gebucht"
 "DE73795500000240762302";"01.04.20";"01.04.20";"ENTGELTABSCHLUSS";"Entgeltabrechnung siehe Anlage ";"";"";"";"";"";"";"";"0000000000";"79550000";"-2,90";"EUR";"Umsatz gebucht"
 "DE73795500000240762302";"31.03.20";"31.03.20";"GUTSCHR. UEBERWEISUNG";"Transferred with Deutsche Bank Mobile ";"";"";"";"";"";"";"Stefan Jakob Bauer";"DE89700700240645455700";"DEUTDEDBMUC";"50,00";"EUR";"Umsatz gebucht"
 "DE73795500000240762302";"31.03.20";"31.03.20";"FOLGELASTSCHRIFT";"BILDUNGSKREDIT DA07896940 AUSZAHLUNG 0,00 ZINS 1,45 TILG 118,55 APL 0,00 GEBUEHR 0,00 ";"DE44ZZZ00000002378";"8020582";"";"";"";"";"KFW                                                                   PALMENGARTENSTR. 5 - 9";"DE32500204001406328080";"KFWIDEFFXXX";"-120,00";"EUR";"Umsatz gebucht"
+"DE73795500000240762302";"01.04.20";"01.04.20";"ABSCHLUSS";"Abrechnung 31.03.2020 siehe Anlage ";"";"";"";"";"";"";"";"0000000000";"79550000";"-17,89";"EUR";"Umsatz gebucht"
  """
         
         
@@ -115,7 +120,7 @@ def retrieve_account_transactions(
 
     # parse raw transactions as returned by api or web scrapper
     parser = Parser(
-        parser_dict=account.provider.csvxls_import.__dict__,
+        parser_dict=parser_dict,
         file=transactions_raw,
         account={
             'account_id': account_id,
@@ -135,9 +140,6 @@ def retrieve_account_transactions(
         '{}: transactions parsed'.format(account.title)
     )
 
-
-    # TODO has all transaction, should be only unique ones
-
     """
     Update account import
     """
@@ -146,7 +148,8 @@ def retrieve_account_transactions(
     new_import_one_account.nmbr_transactions = len(transactions_parsed)
     new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions'])
 
-    
+
+    # final step: append transactions of that account to list importable_transactions
     importable_transactions.extend(transactions_parsed)
     
 
