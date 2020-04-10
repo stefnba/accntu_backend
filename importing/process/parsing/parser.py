@@ -259,10 +259,10 @@ class Parser(object):
         buf = StringIO()
 
         if type == 'raw':
-            self.import_df.to_csv(buf)
+            self.import_df.to_csv(buf, index=False)
         
         if type == 'parsed':
-            self.df.to_csv(buf)
+            self.df.to_csv(buf, index=False)
 
         buf.seek(0)
 

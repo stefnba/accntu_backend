@@ -7,3 +7,8 @@ from django.db import models
 class Settings(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, primary_key=True)
     user_currency = models.CharField(max_length=3)
+
+
+    class Meta:
+        verbose_name = 'Settings'
+        verbose_name_plural = 'Settings'

@@ -2,7 +2,6 @@ from django.conf import settings
 from django.db import models
 
 from accounts.models import Account
-from import_transaction.models import ImportUpload
 
 # Create your models here.
 

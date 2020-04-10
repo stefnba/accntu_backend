@@ -73,9 +73,6 @@ def do_import(self, accounts, user):
         'import_process',
         'Preparing importing of {} transactions'.format(len(importable_transactions))
     )
-
-
-    print(importable_transactions)
     
 
     """

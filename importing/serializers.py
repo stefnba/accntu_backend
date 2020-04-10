@@ -1,15 +1,8 @@
-from decimal import Decimal
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-
-from .utils.fx_rate import FXRate
 from transactions.models import (
     Transaction
 )
-from users.models import Settings
-
-
 
 class ImportSerializer(serializers.ModelSerializer):
 

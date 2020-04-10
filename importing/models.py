@@ -191,3 +191,7 @@ class PhotoTAN(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     photo_tan = models.ImageField(upload_to=get_image_path)
     hash_url = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = 'Photo TAN'
+        verbose_name_plural = 'Photo TANs'
