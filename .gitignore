@@ -97,3 +97,7 @@ db.sqlite3
 
 ### imports ###
 importing/imports/
+
+# vs code
+.vscode
+
