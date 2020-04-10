@@ -33,6 +33,9 @@ class ImportViaAPI(APIView):
     """
 
     def get(self, request):
+        """
+        List all importable accounts for given user
+        """
         
         # TODO list all api and scrapping accounts here
 
@@ -41,6 +44,11 @@ class ImportViaAPI(APIView):
         return Response(accounts, status=status.HTTP_200_OK)
 
     def post(self, request):
+        """
+        Initiate new import process for provided accounts
+        If account list and user is provided, do_import in tasks.py is called
+        and task_id is returned for view ImportViaAPIRunning
+        """
 
         accounts = request.data.get('accounts', None)
         user = request.user.id

@@ -187,6 +187,10 @@ CELERY_TIMEZONE = 'Europe/Berlin'
 CELERY_IMPORTS = ['import_transaction.tasks']
 
 
+CELERY_ALWAYS_EAGER = config('CELERY_ALWAYS_EAGER', default=False)
+
+
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",

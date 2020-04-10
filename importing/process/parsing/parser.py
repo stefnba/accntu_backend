@@ -1,27 +1,35 @@
 import csv, hashlib, os, re
 from datetime import datetime
+# from decimal import Decimal
 
-
-
-import hashlib
 import json
 import pandas as pd
 import numpy as np
 
 from io import StringIO
 
-from .parser_utils import remove_umlaut 
+from .parser_utils import remove_umlaut, FXRate 
 
 
 
 
 class Parser(object):
 
-    def __init__(self, parser_dict, file, account):
+    def __init__(
+        self,
+        parser_dict,
+        file,
+        account,
+        importing_id,
+        user_currency
+    ):
         
         self.parser_dict = parser_dict
         self.file = file
         self.account = account
+        self.importing_id = importing_id
+        self.user_currency = user_currency
+
 
         self.df = pd.DataFrame()
         self.import_df = pd.DataFrame()
@@ -91,7 +99,7 @@ class Parser(object):
         if self.parser_dict['account_amount_col_has_status']:
             item = item.replace('-', '')
         
-        return item
+        return round(float(item), 2)
 
 
     # Clean date
@@ -134,7 +142,7 @@ class Parser(object):
         """
 
         # Clean date
-        self.df['date'] = pd.to_datetime(self.import_df[self.parser_dict['date_col']], format=self.parser_dict['date_format'])
+        self.df['date'] = pd.to_datetime(self.import_df[self.parser_dict['date_col']], format=self.parser_dict['date_format']).dt.date
 
 
         # Clean account currency
@@ -161,6 +169,10 @@ class Parser(object):
         # where spending currency is NaN, fallback to account currency
         if self.parser_dict['spending_currency_fallback_to_account_currency']:
             self.df['spending_currency'] = np.where(self.df['spending_currency'] == 'nan', self.parser_dict['account_currency_default'], self.df['spending_currency'])
+
+        
+        # User currency
+        self.df['user_currency'] = self.user_currency
 
 
         # Clean title
@@ -199,8 +211,19 @@ class Parser(object):
         self.df['account_amount'] = cleaned_account_amount
 
 
+        # Spending to account rate
+        self.df['spending_account_rate'] = round(self.df['account_amount'] / self.df['spending_amount'], 4)
+
+
+        # Account to user rate
+        self.df['account_user_rate'] = self.df.apply(lambda row: FXRate.get_rate(date=row.date, transaction_currency=row.account_currency, counter_currency=self.user_currency), axis=1).astype(np.float64)
+        
+        
+        # User amount
+        self.df['user_amount'] = round(self.df['account_amount'] * self.df['account_user_rate'], 2)
+
         # Importing
-        # self.df['importing'] = self.parser_dict['importing_id']
+        self.df['importing'] = self.importing_id
 
 
         # Account
@@ -212,7 +235,7 @@ class Parser(object):
         counts = self.df['all_cols'].value_counts()
         count_col = self.df['all_cols'].map(counts)
         self.df['all_cols'] = self.df['all_cols'] + str(count_col)
-        self.df['key'] = self.df['all_cols'].apply(lambda item: hashlib.md5((item).encode('utf-8')).hexdigest())
+        self.df['hash_duplicate'] = self.df['all_cols'].apply(lambda item: hashlib.md5((item).encode('utf-8')).hexdigest())
         
         self.df = self.df.drop(columns=['all_cols'])
 
@@ -231,8 +254,7 @@ class Parser(object):
         # save parsed file
         self.to_csv(self.df, 'parsed')
 
-        # return parsed transactions for given account
-        # convert df to list of dict
+        # return parsed transactions for given account (returns dict)
         return self.df.to_dict('records')
 
     

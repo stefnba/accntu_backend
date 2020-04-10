@@ -1,3 +1,6 @@
+import requests
+from decimal import Decimal
+from transactions.models import FX
 
 
 def remove_umlaut(string):
@@ -26,3 +29,99 @@ def remove_umlaut(string):
     string = string.decode('utf-8')
     return string
 
+
+
+
+
+class FXRate(object):
+    """
+    Convert currency
+    """
+    
+    FX_API_URL = 'https://api.exchangeratesapi.io/'
+    
+    
+    def __init__(self, date, transaction_currency, counter_currency):
+
+        self.date = date
+        self.counter_currency = counter_currency
+        self.transaction_currency = transaction_currency
+        self.rate = None        
+
+    # def get_amount(self, amount):
+        
+    #     amount = Decimal(amount) * Decimal(self.rate)
+    #     return str(round(amount, 2))
+
+    def retrieve_rate_from_db(self):
+        try:
+            pair = FX.objects.get(
+                date=self.date, 
+                counter_currency=self.counter_currency, 
+                transaction_currency=self.transaction_currency
+            )
+            rate = pair.rate
+
+            self.rate = float(rate)
+            return rate
+
+        except FX.DoesNotExist:
+            return False
+    
+    def call_api(self):
+        """
+        Call api
+        """
+
+        r = requests.get('{}{}?base={}&symbols={}'.format(self.FX_API_URL, self.date, self.transaction_currency, self.counter_currency))
+        
+        if r.status_code == 200:
+            res = r.json()
+
+            rate = res.get('rates', None).get(self.counter_currency, None)
+
+            # save rate to db
+            save_rate = FX.objects.create(
+                date=self.date,
+                counter_currency=self.counter_currency, 
+                transaction_currency=self.transaction_currency,
+                rate=rate
+            )
+
+            # return rate
+            return rate
+
+
+        # return error
+        return False
+
+
+    
+    @classmethod
+    def get_rate(
+        cls,
+        date=None,
+        transaction_currency=None,
+        counter_currency=None
+    ):
+        """
+        Get rate directly, e.g. for apply function in pandas df
+        """
+
+   
+        # transaction currency equals counter currency
+        if transaction_currency == counter_currency:
+            return 1
+        
+        # fx conversion necessary
+        else:
+            converter = cls(date, transaction_currency, counter_currency)
+            rate = converter.retrieve_rate_from_db()
+            
+            # rate already in db, no api call necessary
+            if rate:
+                return rate
+            
+            # query api if rate not available in db
+            else:
+                return converter.call_api()

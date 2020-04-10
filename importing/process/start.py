@@ -19,12 +19,17 @@ from .process_utils import pusher_trigger
 
 def retrieve_account_transactions(
         user,
+        user_currency,
         account_id,
         task_id,
         new_import,
         importable_transactions
     ):
+    """
+    Initiate import of one account
+    """
 
+    # retrieve account info
     try: 
         account = Account.objects.get(id=account_id)
     
@@ -42,8 +47,6 @@ def retrieve_account_transactions(
     """
     If account exists, execute below
     """
-
-    print(account)
     
     # create db object in model NewImportOneAccount for import of this account
     new_import_one_account = NewImportOneAccount.objects.create(
@@ -110,40 +113,42 @@ def retrieve_account_transactions(
     Parse raw transactions into importable transactions
     """
 
+    # parse raw transactions as returned by api or web scrapper
     parser = Parser(
         parser_dict=account.provider.csvxls_import.__dict__,
         file=transactions_raw,
         account={
             'account_id': account_id,
             'account_name': 'TEST_NAME'
-        }
+        },
+        importing_id=new_import_one_account.id,
+        user_currency=user_currency
     )
+
+    # returns dict
     transactions_parsed = parser.parse()
 
+    # trigger parsed msg
     pusher_trigger(
         task_id,
         'import_process',
         '{}: transactions parsed'.format(account.title)
     )
 
-    print(transactions_parsed)
 
+    # TODO has all transaction, should be only unique ones
 
     """
     Update account import
     """
         
-    # TODO has all transaction, should be only unique ones
     new_import_one_account.import_success = True
     new_import_one_account.nmbr_transactions = len(transactions_parsed)
     new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions'])
 
-    # add importing id for each transaction
-    transactions_parsed = [dict(item, **{'importing': new_import_one_account.id }) for item in transactions_parsed]
-
-
+    
     importable_transactions.extend(transactions_parsed)
-
+    
 
 
 

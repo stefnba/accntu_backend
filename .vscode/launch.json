@@ -5,6 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Django",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/manage.py",
+            "pythonPath": "/Users/Stefan/Sites/01 Python/VENV/bin/python",
+            "console": "integratedTerminal",
+            "args": [
+                "runserver",
+                "--noreload",
+                "127.0.0.1:8080",
+            ],
+            "django": true
+        },
+        {
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",

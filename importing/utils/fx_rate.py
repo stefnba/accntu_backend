@@ -21,6 +21,8 @@ class FXRate(object):
             return str(rate)
         else:
             rate = self.retrieve_rate_from_db()
+
+            print('rate', rate)
             
             if rate:
                 # return rate if already in db
@@ -37,6 +39,8 @@ class FXRate(object):
             
 
     def get_amount(self, amount):
+        print(amount)
+        print(self.rate)
         amount = Decimal(amount) * Decimal(self.rate)
         return str(round(amount, 2))
 

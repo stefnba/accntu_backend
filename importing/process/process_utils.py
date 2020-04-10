@@ -42,3 +42,4 @@ def pusher_trigger_msg(task_id, msg):
     pusher_client.trigger(task_id, pusher_event_name, {
         'message': msg
     })
+
