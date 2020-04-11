@@ -111,7 +111,7 @@ class NewImport(models.Model):
     import_success = models.BooleanField(default=False)
 
     class Meta:
-        ordering = ['imported_at',]
+        ordering = ['-imported_at',]
         verbose_name = 'Import'
         verbose_name_plural = 'Imports'
 

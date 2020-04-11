@@ -12,6 +12,8 @@ from django.core.files import File
 import requests
 import tempfile
 
+from io import StringIO, BytesIO
+
 from .providers.scrapping.utils import hash_url
 
 
@@ -55,10 +57,12 @@ class ImportViaAPI(APIView):
 
         if accounts and user:
             # start import process in tasks.py
-            task = do_import.delay(accounts, user)
+            task = do_import.delay(accounts=accounts, user=user)
             
             res = {
                 'task_id': task.id,
+                'res_msg': 'Import has started',
+                'respone': 'IMPORT_STARTED'
             }
 
             # return task id -> can be queried with view ImportViaAPIRunning
@@ -131,6 +135,54 @@ class ImportViaAPITwoFactorRetrievePhotoTAN(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
+class Upload(APIView):
+
+    def post(self, request):
+
+        uploaded_file = request.FILES['file']
+        account_id = request.data.get('id', None)
+        user = request.user.id
+
+        # Set to file position zero
+        uploaded_file.seek(0)
+
+        # TODO Convert XLS to CSV
+
+        if user and account_id and uploaded_file:
+
+            try:
+                file_text = str(uploaded_file.read().decode())
+            
+            except:
+                return Response({
+                    'err_msg': 'Please provide a .CSV file',
+                    'error': 'WRONG_DATA_TYPE'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+
+            # start import process in tasks.py
+            print('start task')
+            task = do_import.delay(
+                accounts=[account_id],
+                user=user,
+                data=file_text,
+                import_upload_type='upload'
+            )
+
+            res = {
+                'task_id': task.id,
+                'res_msg': 'Upload has started',
+                'respone': 'UPLOAD_STARTED'
+            }
+
+            # return task id -> can be queried with view ImportViaAPIRunning
+            return Response(res, status=status.HTTP_201_CREATED)
+        
+
+        return Response({
+            'err_msg': 'Please provide all necessary information!',
+            'error': 'DATA_MISSING'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 

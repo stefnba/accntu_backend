@@ -6,6 +6,9 @@ from importing.models import CsvXlsImportDetails
 
 # Create your models here.
 
+def get_image_path(instance, filename):
+    return 'providers/logos/{}/{}/{}'.format(instance.country, instance.key, filename)
+
 class Provider(models.Model):
     
     ACCESS_TYPE_CHOICES = (
@@ -18,21 +21,18 @@ class Provider(models.Model):
         ('card','Card'), 
         ('account','Account')
     )
-    
+
     provider = models.CharField(max_length=255)
     key = models.CharField(max_length=255)
     country = models.CharField(max_length=2)
     color = models.CharField(max_length=255, blank=True, null=True)
-    logo = models.CharField(max_length=255, blank=True, null=True)
+    logo = models.ImageField(upload_to=get_image_path, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     access_type = models.CharField(max_length=255, choices=ACCESS_TYPE_CHOICES)
     provider_type = models.CharField(max_length=255, choices=PROVIDER_TYPE_CHOICES)
     currency = models.CharField(max_length=3)  
     csvxls_import = models.ForeignKey('importing.CsvXlsImportDetails', on_delete=models.SET_NULL, blank=True, null=True)
-
-    parser_map = JSONField()
-    csv_meta = JSONField(blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.provider, self.country)

@@ -183,10 +183,10 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Europe/Berlin'
-CELERY_IMPORTS = ['import_transaction.tasks']
+CELERY_IMPORTS = ['importing.tasks']
 
 
-CELERY_ALWAYS_EAGER = config('CELERY_ALWAYS_EAGER', default=False)
+# CELERY_ALWAYS_EAGER = config('CELERY_ALWAYS_EAGER', default=False)
 
 
 

@@ -13,7 +13,7 @@ from users.models import Settings
 
 
 @task(bind=True)
-def do_import(self, accounts, user):
+def do_import(self, accounts=[], user=None, data=None, import_upload_type='import'):
     """
     Celery task triggered by view ImportViaAPI in views.py, handles threading of parallel import with calling
     function retrieve_account_transactions as defined in process/start.py
@@ -36,7 +36,7 @@ def do_import(self, accounts, user):
     # trigger start msg
     pusher_trigger(
         task_id,
-        'import_process',
+        'IMPORT_PROCESS',
         'Import process has started ...'
     )
 
@@ -56,7 +56,9 @@ def do_import(self, accounts, user):
                 account_id, 
                 task_id,
                 new_import, 
-                importable_transactions
+                importable_transactions,
+                data,
+                import_upload_type,
             )
         )
 
@@ -70,7 +72,7 @@ def do_import(self, accounts, user):
 
     pusher_trigger(
         task_id,
-        'import_process',
+        'IMPORT_PROCESS',
         'Preparing importing of {} transactions'.format(len(importable_transactions))
     )
     
@@ -107,8 +109,8 @@ def do_import(self, accounts, user):
         # trigger success messages
         pusher_trigger(
             task_id,
-            'import_process',
-            'Import successful'
+            'IMPORT_PROCESS',
+            'Import has been successful'
         )
 
 

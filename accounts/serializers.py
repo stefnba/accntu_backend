@@ -8,7 +8,7 @@ from .models import (
 class ProviderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Provider
-        fields = ('key', 'provider', 'parser_map', 'access_type', 'csv_meta')
+        fields = ('key', 'provider', 'access_type', 'logo')
 
 
 class AccountListSerializer(serializers.ModelSerializer):
