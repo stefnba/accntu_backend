@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
 from accounts.models import Account
-from ..models import NewImport, NewImportOneAccount, CsvXlsImportDetails
+from ..models import NewImport, NewImportOneAccount, CsvXlsImportDetails, Upload
 
 # from ..providers.providers import provider_classes
 
@@ -25,8 +25,7 @@ def retrieve_account_transactions(
         task_id,
         new_import,
         importable_transactions,
-        data,
-        import_upload_type
+        upload,
     ):
     """
     Initiate import of one account
@@ -48,7 +47,26 @@ def retrieve_account_transactions(
         account=account
     )
 
-    if import_upload_type == 'import':
+    # if upload id is provided then type upload
+    if upload:
+        print(123)
+        
+        u = Upload.objects.filter(id=upload).first()
+        parser_qs = CsvXlsImportDetails.objects.filter(provider__account__id=account_id).first()
+
+        # no parser or upload found in db
+        if not u and not parser_qs:
+            return []
+        
+        parser_dict = model_to_dict(parser_qs)
+        
+        if parser_dict['file_type'] == 'csv':
+            transactions_file = str(u.upload_file.read().decode(encoding=parser_dict['file_encoding']))
+        else:
+            transactions_file = u.upload_file
+
+    # if None then type import
+    else:
 
         # TODO what is this here?
         key = account.provider.key
@@ -78,22 +96,10 @@ def retrieve_account_transactions(
         API access
         """
         if account.provider.access_type == 'api':
-            transactions_raw = []
+            transactions_file = []
 
 
-    if import_upload_type == 'upload':
 
-        print(123)
-        
-        transactions_raw = data
-
-        parser_qs = CsvXlsImportDetails.objects.filter(provider__account__id=account_id).first()
-
-        # no parser found in db
-        if not parser_qs:
-            return []
-
-        parser_dict = model_to_dict(parser_qs)
 
 
     """
@@ -103,7 +109,7 @@ def retrieve_account_transactions(
     # parse raw transactions as returned by api or web scrapper
     parser = Parser(
         parser_dict=parser_dict,
-        file=transactions_raw,
+        file=transactions_file,
         account={
             'account_id': account_id,
             'account_name': 'TEST_NAME'

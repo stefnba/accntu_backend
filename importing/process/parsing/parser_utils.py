@@ -1,6 +1,38 @@
 import requests
+import pandas as pd
+import numpy as np
+
 from decimal import Decimal
 from transactions.models import FX
+from io import StringIO
+
+
+def convert_upload_file(uploaded_file, account_id):
+
+    
+
+    # Check if csv
+    try:
+        uploaded_file.seek(0)
+        file_text = str(uploaded_file.read().decode())
+
+    except:
+        
+        # convert xls to csv
+        try:
+            buf = StringIO()
+            file_df = pd.read_excel(uploaded_file)
+            file_df.to_csv(buf, index=False, encoding='utf-8', sep=',')
+            buf.seek(0)
+
+            # get value of StringIO buf
+            file_text = buf.getvalue()
+
+        # return error if both csv and excel cannot be read
+        except:
+            return False
+
+    return file_text
 
 
 def remove_umlaut(string):
@@ -28,9 +60,6 @@ def remove_umlaut(string):
 
     string = string.decode('utf-8')
     return string
-
-
-
 
 
 class FXRate(object):

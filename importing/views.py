@@ -1,5 +1,6 @@
 from celery.result import AsyncResult
 from django.core.cache import cache
+from django.core.files import File
 from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework import status
@@ -9,9 +10,8 @@ from rest_framework.generics import (
 )
 
 from .tasks import do_import
-from .models import NewImport, NewImportOneAccount, PhotoTAN
+from .models import NewImport, NewImportOneAccount, PhotoTAN, Upload as NewUpload
 from .serializers import ImportListSerializer
-from django.core.files import File
 
 import requests
 import tempfile
@@ -19,10 +19,6 @@ import tempfile
 from io import StringIO, BytesIO
 
 from .providers.scrapping.utils import hash_url
-
-
-from decouple import config
-from pusher import Pusher
 
 
 # Create your views here.
@@ -147,30 +143,28 @@ class Upload(APIView):
         account_id = request.data.get('id', None)
         user = request.user.id
 
-        # Set to file position zero
-        uploaded_file.seek(0)
-
-        # TODO Convert XLS to CSV
-
         if user and account_id and uploaded_file:
 
-            try:
-                file_text = str(uploaded_file.read().decode())
-            
-            except:
-                return Response({
-                    'err_msg': 'Please provide a .CSV file',
-                    'error': 'WRONG_DATA_TYPE'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # TODO Validate file type
+            # if not file_text:
+            #     return Response({
+            #         'err_msg': 'Please provide a valid file',
+            #         'error': 'WRONG_DATA_TYPE'
+            #     }, status=status.HTTP_400_BAD_REQUEST)
 
+            # save new upload to database
+            new_upload = NewUpload.objects.create(
+                user_id=user,
+                account_id=account_id,
+                upload_file=uploaded_file
+            )
 
             # start import process in tasks.py
             print('start task')
             task = do_import.delay(
                 accounts=[account_id],
                 user=user,
-                data=file_text,
-                import_upload_type='upload'
+                upload=new_upload.id,
             )
 
             res = {
@@ -193,7 +187,7 @@ class Upload(APIView):
 
 class ImportList(ListAPIView):
     """
-    List all imports done by a user
+    List all imports with # transactions >0 done by a user
     """
 
     queryset = NewImport.objects.filter(nmbr_transactions__gt=0)

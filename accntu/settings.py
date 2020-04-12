@@ -186,7 +186,7 @@ CELERY_TIMEZONE = 'Europe/Berlin'
 CELERY_IMPORTS = ['importing.tasks']
 
 
-# CELERY_ALWAYS_EAGER = config('CELERY_ALWAYS_EAGER', default=False)
+CELERY_ALWAYS_EAGER = config('CELERY_ALWAYS_EAGER', default=False)
 
 
 

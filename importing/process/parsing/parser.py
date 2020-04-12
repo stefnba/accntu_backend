@@ -98,6 +98,9 @@ class Parser(object):
         
         if self.parser_dict['account_amount_col_has_status']:
             item = item.replace('-', '')
+
+        if item == '':
+            item = 0
         
         return round(float(item), 2)
 
@@ -113,13 +116,24 @@ class Parser(object):
     def read_file(self):
 
         # Create DFs (StringIO necessary to read from variable/memory)
+
+        file_encoding = self.parser_dict['file_encoding']
+        if file_encoding is None:
+            file_encoding = 'utf-8'
+
+        sep = self.parser_dict['csv_sep']
+        if sep is None:
+            sep = ','
+
         if self.parser_dict['file_type'] == 'csv':
+
+        
             self.import_df = pd.read_csv(
                 StringIO(self.file),
-                sep = self.parser_dict['csv_sep'],
-                skiprows = self.parser_dict['skiprows'],
-                encoding = self.parser_dict['file_encoding'],
-                error_bad_lines = False
+                sep=sep,
+                skiprows=self.parser_dict['skiprows'],
+                encoding=file_encoding,
+                error_bad_lines=False
             )
         
         elif self.parser_dict['file_type'] == 'xls':
@@ -200,15 +214,17 @@ class Parser(object):
         cleaned_spending_amount = self.import_df[self.parser_dict['spending_amount_col']].apply(self.clean_amount, args=('spending_amount',)).apply(pd.to_numeric)
         cleaned_account_amount = self.import_df[self.parser_dict['account_amount_col']].apply(self.clean_amount, args=('account_amount',)).apply(pd.to_numeric)
 
-        # Clean spending amount
-        if self.parser_dict['spending_amount_fallback_to_account_amount']:
-            self.df['spending_amount'] = np.where(self.import_df[self.parser_dict['spending_amount_col']] == 0, cleaned_account_amount, cleaned_spending_amount)
-        else:
-            self.df['spending_amount'] = cleaned_spending_amount
-
-
         # Clean account amount
         self.df['account_amount'] = cleaned_account_amount
+
+        # Clean spending amount
+        self.df['spending_amount'] = cleaned_spending_amount
+
+        # Fallback for spending amount to elimniate zeros
+        if self.parser_dict['spending_amount_fallback_to_account_amount']:
+            self.df['spending_amount'] = np.where(self.df['spending_amount'] == 0, self.df['account_amount'], self.df['spending_amount'])
+
+
 
 
         # Spending to account rate

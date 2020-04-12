@@ -5,7 +5,8 @@ from .models import (
     NewImport,
     NewImportOneAccount,
     CsvXlsImportDetails,
-    PhotoTAN
+    PhotoTAN,
+    Upload
 )
 
 
@@ -40,3 +41,4 @@ admin.site.register(NewImport, ImportAdmin)
 admin.site.register(NewImportOneAccount, ImportOneAccountAdmin)
 admin.site.register(CsvXlsImportDetails)
 admin.site.register(PhotoTAN)
+admin.site.register(Upload)

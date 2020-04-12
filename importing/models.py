@@ -195,3 +195,36 @@ class PhotoTAN(models.Model):
     class Meta:
         verbose_name = 'Photo TAN'
         verbose_name_plural = 'Photo TANs'
+
+
+
+
+# Set path and filename of imported csv file
+def get_upload_file_path(instance, filename):
+    
+    account = str(instance.account)
+    dt = datetime.now()
+    user = instance.user.id
+
+    extension = os.path.splitext(filename)[1:]
+    name = os.path.splitext(filename)[:1]
+    filename_new = "{}_{}{:02d}{:02d}_{:02d}{:02d}{:02d}_{}_upload_file{}".format(
+                                            account, 
+                                            dt.year, 
+                                            dt.month, 
+                                            dt.day, 
+                                            dt.hour, 
+                                            dt.minute, 
+                                            dt.second, 
+                                            name,
+                                            extension
+                                        )
+
+    return 'imports/{}/{}/{:02d}/{}/{}'.format(user, dt.year, dt.month, account, filename_new)
+
+
+class Upload(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
+    account = models.ForeignKey("accounts.Account", on_delete=models.SET_NULL, blank=True, null=True)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    upload_file = models.FileField(upload_to=get_upload_file_path, blank=True, null=True)
