@@ -37,7 +37,10 @@ def do_import(self, accounts=[], user=None, data=None, import_upload_type='impor
     pusher_trigger(
         task_id,
         'IMPORT_PROCESS',
-        'Import process has started ...'
+        { 
+            'msg': 'Import process has started ...',
+            'progress_push': 10,
+        }
     )
 
 
@@ -73,7 +76,10 @@ def do_import(self, accounts=[], user=None, data=None, import_upload_type='impor
     pusher_trigger(
         task_id,
         'IMPORT_PROCESS',
-        'Preparing importing of {} transactions'.format(len(importable_transactions))
+        { 
+            'msg': 'Preparing importing of {} transactions'.format(len(importable_transactions)),
+            'progress_push': 10,
+        }
     )
     
 
@@ -109,8 +115,12 @@ def do_import(self, accounts=[], user=None, data=None, import_upload_type='impor
         # trigger success messages
         pusher_trigger(
             task_id,
-            'IMPORT_PROCESS',
-            'Import has been successful'
+            'IMPORT_SUCCESS',
+            { 
+                'msg': 'Import has been successful',
+                'progressbar': 100,
+                'count': nmbr_transactions
+            }
         )
 
 

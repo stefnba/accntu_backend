@@ -4,9 +4,13 @@ from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.generics import (
+    ListAPIView,
+)
 
 from .tasks import do_import
-from .models import NewImportOneAccount, PhotoTAN
+from .models import NewImport, NewImportOneAccount, PhotoTAN
+from .serializers import ImportListSerializer
 from django.core.files import File
 
 import requests
@@ -187,7 +191,15 @@ class Upload(APIView):
 
 
 
+class ImportList(ListAPIView):
+    """
+    List all imports done by a user
+    """
 
+    queryset = NewImport.objects.filter(nmbr_transactions__gt=0)
+    serializer_class = ImportListSerializer
+
+    # filterset_class = TransactionFilterSet
 
 
 

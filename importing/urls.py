@@ -6,6 +6,7 @@ from .views import (
     ImportViaAPITwoFactorSubmitTAN,
     ImportViaAPITwoFactorRetrievePhotoTAN,
     Upload,
+    ImportList,
 
     Test
 )
@@ -19,5 +20,9 @@ urlpatterns = [
     path('api/two_factor/retrieve_photo_tan/<str:hash_url>/', ImportViaAPITwoFactorRetrievePhotoTAN.as_view(), name='import-via-api-two-factor-retrieve-photo-tan'),
 
     path('upload/', Upload.as_view(), name='import-upload'),
+    path('imports/', ImportList.as_view(), name='import-list'),
+
+
+
     path('import/test/', Test.as_view(), name='import-test'),
 ]

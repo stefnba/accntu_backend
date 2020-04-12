@@ -17,29 +17,5 @@ pusher_event_name = 'import_process'
 pusher_error_event_name = 'import_error'
 
 
-def pusher_trigger(task_id, event, msg):
-
-    pusher_client.trigger(task_id, event, {
-        'msg': msg
-    })
-
-
-"""
-OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD 
-"""
-
-def pusher_trigger_error(task_id, msg):
-    print(msg)
-    
-    pusher_client.trigger(task_id, pusher_error_event_name, {
-        'message': msg
-    })
-
-def pusher_trigger_msg(task_id, msg):
-
-    print(msg)
-
-    pusher_client.trigger(task_id, pusher_event_name, {
-        'message': msg
-    })
-
+def pusher_trigger(task_id, event, payload):
+    pusher_client.trigger(task_id, event, payload)

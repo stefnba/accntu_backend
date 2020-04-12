@@ -4,7 +4,23 @@ from transactions.models import (
     Transaction
 )
 
+from .models import NewImport
+
+class ImportListSerializer(serializers.ModelSerializer):
+    """
+    List all imports
+    """
+    
+    class Meta:
+        model = NewImport
+        fields = ('imported_at','nmbr_transactions', 'import_success')
+
+
+
 class ImportSerializer(serializers.ModelSerializer):
+    """
+    Bulk creation of transactions following import/upload
+    """
 
     def create(self, validated_data):
 

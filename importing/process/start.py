@@ -121,7 +121,10 @@ def retrieve_account_transactions(
     pusher_trigger(
         task_id,
         'IMPORT_PROCESS',
-        '{}: transactions parsed'.format(account.title)
+        {
+            'msg': '{}: transactions parsed'.format(account.title),
+            'progress': 10,
+        }
     )
 
     """
