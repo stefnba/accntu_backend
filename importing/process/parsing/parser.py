@@ -107,8 +107,18 @@ class Parser(object):
 
     # Clean date
     def clean_title(self, item):
+
+        item = str(item)
+
+        if item == 'nan':
+            return None
+
+        # Remove douple spaces
+        item = re.sub(' +', ' ', item)
     
+        # Remove Umlaute
         item = remove_umlaut(item)
+        
         return item
 
 
@@ -228,7 +238,7 @@ class Parser(object):
 
 
         # Spending to account rate
-        self.df['spending_account_rate'] = round(self.df['account_amount'] / self.df['spending_amount'], 4)
+        self.df['spending_account_rate'] = round(self.df['account_amount'] / self.df['spending_amount'], 8)
 
 
         # Account to user rate
@@ -241,6 +251,33 @@ class Parser(object):
         # Importing
         self.df['importing'] = self.importing_id
 
+
+        # Clean counterparty
+        if self.parser_dict['counterparty_col'] is not None:
+            self.df['counterparty'] = self.import_df[self.parser_dict['counterparty_col']].apply(self.clean_title)
+        else:
+            self.df['counterparty'] = None
+        
+        # Clean reference text
+        if self.parser_dict['reference_text_col'] is not None:
+            self.df['reference_text'] = self.import_df[self.parser_dict['reference_text_col']].apply(self.clean_title)
+        else:
+            self.df['reference_text'] = None
+
+        
+        # Clean IBAN and BIC text
+        if self.parser_dict['iban_col'] is not None:
+            self.df['iban'] = self.import_df[self.parser_dict['iban_col']]
+        else:
+            self.df['iban'] = None
+
+        if self.parser_dict['bic_col'] is not None:
+            self.df['bic'] = self.import_df[self.parser_dict['bic_col']]
+        else:
+            self.df['bic'] = None
+
+
+        
 
         # Account
         self.df['account'] = self.account['account_id']

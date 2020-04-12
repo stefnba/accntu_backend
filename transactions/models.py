@@ -14,7 +14,7 @@ class FX(models.Model):
     date = models.DateField()
     transaction_currency = models.CharField(max_length=3)
     counter_currency = models.CharField(max_length=3)
-    rate = models.DecimalField(decimal_places=4, max_digits=1000)
+    rate = models.DecimalField(decimal_places=8, max_digits=1000)
 
     def __str__(self):
         return '{}_{}_{}'.format(self.transaction_currency, self.counter_currency, self.date)
@@ -60,10 +60,10 @@ class Transaction(models.Model):
 
     spending_amount = models.DecimalField(decimal_places=2, max_digits=1000)
     spending_currency = models.CharField(max_length=3)
-    spending_account_rate = models.DecimalField(decimal_places=4, max_digits=1000)
+    spending_account_rate = models.DecimalField(decimal_places=8, max_digits=1000)
     account_amount = models.DecimalField(decimal_places=2, max_digits=1000)
     account_currency = models.CharField(max_length=3)
-    account_user_rate = models.DecimalField(decimal_places=4, max_digits=1000)
+    account_user_rate = models.DecimalField(decimal_places=8, max_digits=1000)
     user_amount = models.DecimalField(decimal_places=2, max_digits=1000)
     user_currency = models.CharField(max_length=3)   
 
