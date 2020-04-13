@@ -17,11 +17,12 @@ FILTER_FIELDS = (
     'account_currency', 
     'counterparty',
     'country',
-    'date', 
+    # 'date', 
     'spending_currency', 
     'status',
     'category',
     'expense__label',
+    'title',
 )
 
 
@@ -57,6 +58,7 @@ class TransactionFilterSet(filters.FilterSet):
     category = ListFilter(field_name='category', lookup_expr = 'in')
     status = ListFilter(field_name='status', lookup_expr = 'in')
     label = ListFilter(field_name='label', lookup_expr = 'in')
+    title = filters.CharFilter(field_name='title', lookup_expr = 'icontains')
     
     date_start = filters.DateFilter(field_name='date', lookup_expr = 'gte')
     date_end = filters.DateFilter(field_name='date', lookup_expr = 'lte')

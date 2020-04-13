@@ -19,18 +19,27 @@ from django.conf.urls.static import static
 from django.urls import include, path
 
 urlpatterns = [
-    path('', include('main.urls', namespace='main',)),  # main app
-    path('accounts/', include('accounts.urls', namespace='accounts',)), # accounts
-    path('admin/', admin.site.urls),    # admin
-    path('auth/', include('oauth2_provider.urls', namespace='oauth2_provider')), # oauth2
+    path('', include('main.urls', namespace='main',)), 
+    path('accounts/', include('accounts.urls', namespace='accounts',)),
+    path('admin/', admin.site.urls),    
+    path('auth/', include('oauth2_provider.urls', namespace='oauth2_provider')), 
     path('budget/', include('budget.urls', namespace='budget',)),
     path('business/', include('business.urls', namespace='business',)),
-    path('filtering/', include('filtering.urls', namespace='filtering')), # oauth2
+    path('filtering/', include('filtering.urls', namespace='filtering')), 
     path('import/', include('importing.urls', namespace='importing',)),
     path('transactions/', include('transactions.urls', namespace='transactions',)),
-    path('users/', include('users.urls', namespace='users',)),  # users app
+    path('users/', include('users.urls', namespace='users',)),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    import debug_toolbar
+    urlpatterns = [
+        path('__debug__/', include(debug_toolbar.urls)),
+
+        # For django versions before 2.0:
+        # url(r'^__debug__/', include(debug_toolbar.urls)),
+
+    ] + urlpatterns

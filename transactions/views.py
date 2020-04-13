@@ -20,6 +20,8 @@ from .serializers import (
     TransactionRetrieveUpdateSerializer,
 )
 
+from .pagination import StandardResultsSetPagination
+
 from filtering.filters import TransactionFilterSet
 
 
@@ -31,6 +33,7 @@ class TransactionList(ListAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionListSerializer
 
+    # pagination_class = StandardResultsSetPagination
     filterset_class = TransactionFilterSet
 
     # def get_queryset(self):
