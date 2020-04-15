@@ -238,12 +238,14 @@ class TransactionBulkUpdateSerializer(serializers.ModelSerializer):
         print(validated_data)
 
 
-        expense_data = validated_data.pop('expense')
 
         instance.title = validated_data.get('title', instance.title)
         instance.category = validated_data.get('category', instance.category)
         instance.status = validated_data.get('status', instance.status)
-        instance.status = validated_data.get('status', instance.status)
+        instance.save()
+
+        expense_data = validated_data.pop('expense')
+
 
         try:
             expense = instance.expense
@@ -262,7 +264,6 @@ class TransactionBulkUpdateSerializer(serializers.ModelSerializer):
         except:
             pass
 
-        instance.save()
 
         return instance
 

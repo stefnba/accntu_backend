@@ -30,7 +30,7 @@ from filtering.filters import TransactionFilterSet
 class TransactionList(ListAPIView):
     """ listing all transactions """
     
-    queryset = Transaction.objects.all()
+    queryset = Transaction.objects.select_related('account', 'expense', 'expense__label', 'expense__label__bucket', 'expense__label__icon')
     serializer_class = TransactionListSerializer
 
     # pagination_class = StandardResultsSetPagination
@@ -43,6 +43,13 @@ class TransactionList(ListAPIView):
     #     filters = {k: v.split(u',') for k, v in params.items()}
     #     print(filters)
     #     return Transaction.objects.filter(reduce(and_, (Q(**{f'{k}__in': v}) for k, v in filters.items())))
+
+    # def dispatch(self, *args, **kwargs):
+    #     response = super().dispatch(*args, **kwargs)
+    #     # For debugging purposes only.
+    #     from django.db import connection
+    #     print('# of Queries: {}'.format(len(connection.queries)))
+    #     return response
 
 
 class TransactionRetrieveUpdate(RetrieveUpdateAPIView):

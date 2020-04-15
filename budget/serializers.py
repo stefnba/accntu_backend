@@ -62,8 +62,8 @@ class LabelListAddInfoSerializer(serializers.ModelSerializer):
     """ List all labels with additional information on sum and count """
     """ Also used as nested serializer for BucketWithLabelsListSerializer """
 
-    transaction_count = serializers.SerializerMethodField()
-    transaction_sum = serializers.SerializerMethodField()
+    # transaction_count = serializers.SerializerMethodField()
+    # transaction_sum = serializers.SerializerMethodField()
     icon = IconListSerializer(read_only=True)
     
     class Meta:
@@ -73,21 +73,21 @@ class LabelListAddInfoSerializer(serializers.ModelSerializer):
             'title',
             'rank',
             'icon',
-            'transaction_count',
-            'transaction_sum',
+            # 'transaction_count',
+            # 'transaction_sum',
         )
 
 
-    def get_transaction_count(self, obj):
-        print(obj.label.all().aggregate(Sum('budget_amount')))
-        return obj.label.count()
+    # def get_transaction_count(self, obj):
+    #     print(obj.label.all().aggregate(Sum('budget_amount')))
+    #     return obj.label.count()
 
-    def get_transaction_sum(self, obj):
-        s = obj.label.all().aggregate(Sum('budget_amount'))['budget_amount__sum']
-        if s:
-            return s
+    # def get_transaction_sum(self, obj):
+    #     s = obj.label.all().aggregate(Sum('budget_amount'))['budget_amount__sum']
+    #     if s:
+    #         return s
         
-        return 0
+    #     return 0
 
 
 class LabelRetrieveUpdateDestroySerializer(serializers.ModelSerializer):

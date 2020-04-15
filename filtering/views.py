@@ -21,7 +21,7 @@ from transactions.models import (
     Transaction
 )
 
-from .filters import FILTER_FIELDS, TransactionFilterSet
+from .filters import FILTER_FIELDS, TransactionFilterSet, NONE_KEY
 
 
 # Create your views here.
@@ -30,7 +30,7 @@ FILTER_FIELDS_NESTED = {
     'account': {
         'title': 'account__title'
     },
-    'expense': {
+    'expense__label': {
         'title': 'expense__label__title'
     },
 }
@@ -64,6 +64,13 @@ class Filtering(ListModelMixin, GenericAPIView):
                     field_name = add_info.get('title', None)
                     field_value = qs.filter(**{ field: item }).values(field_name).first()
                     title = field_value[field_name]
+
+                # replace for NONE_KEY
+                if item is None:
+                    item = NONE_KEY
+                
+                if title is None:
+                    title = NONE_KEY
                 
                 filter_choices.append({
                     'id': item,

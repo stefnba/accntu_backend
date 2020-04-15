@@ -14,18 +14,18 @@ from budget.models import (
 
 FILTER_FIELDS = (
     'account',
-    'account_currency', 
-    'counterparty',
-    'country',
+    # 'account_currency', 
+    # 'counterparty',
+    # 'country',
     # 'date', 
     'spending_currency', 
     'status',
     'category',
     'expense__label',
-    'title',
+    # 'title',
 )
 
-
+NONE_KEY = 'EMPTY'
 
 class ListFilter(filters.Filter):
 
@@ -37,8 +37,14 @@ class ListFilter(filters.Filter):
             qs = qs.distinct()
 
         multiple_values = value.split(u',')
-
+        
         lookup = '%s__%s' % (self.field_name, self.lookup_expr)
+
+        # also include None values in qs
+        if NONE_KEY in multiple_values:
+            multiple_values.remove(NONE_KEY)
+            return self.get_method(qs)(Q(**{lookup: multiple_values})|Q(**{self.field_name:None}))
+
         return self.get_method(qs)(Q(**{lookup: multiple_values}))
 
         # if len(multiple_values) > 1:

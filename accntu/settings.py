@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     'oauth2_provider', #added
     'rest_framework', # added
     'corsheaders', # added
-    # 'debug_toolbar',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -68,7 +68,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Debug toolbar
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware', 
+    'debug_toolbar.middleware.DebugToolbarMiddleware', 
 ]
 
 ROOT_URLCONF = 'accntu.urls'
@@ -205,9 +205,9 @@ CACHES = {
 }
 
 # Debug toolbar
-# INTERNAL_IPS = [
-#     '127.0.0.1',
-# ]
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
 
 
 """

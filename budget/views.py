@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Sum, Prefetch
 from django.http import HttpResponse
 from django.shortcuts import render
 from rest_framework import status
@@ -71,7 +71,9 @@ class BudgetTransactionList(ListAPIView):
 class BucketsWithLabelsList(ListAPIView):
     """ listing all buckets with related Labels """
     
-    queryset = Bucket.objects.all()
+    queryset = Bucket.objects.prefetch_related(Prefetch('bucket', queryset=Label.objects.select_related('icon')))
+    # queryset = Bucket.objects.all()
+    # queryset = Bucket.objects.prefetch_related('bucket', 'bucket__icon')
     serializer_class = BucketWithLabelsListSerializer
 
 
