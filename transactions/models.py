@@ -85,6 +85,7 @@ class Transaction(models.Model):
         super(Transaction, self).__init__(*args, **kwargs)
         self.prev_category = self.category
 
+
     def save(self, *args, **kwargs):
 
         prev = str(self.prev_category).strip()
@@ -124,3 +125,22 @@ class Transaction(models.Model):
 
 
         super().save(*args, **kwargs)
+
+
+
+    
+class TransactionChangeLog(models.Model):
+    transaction = models.ForeignKey('transactions.Transaction', on_delete=models.SET_NULL, blank=True, null=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    field = models.CharField(max_length=255)
+    prev_value = models.CharField(max_length=255, blank=True, null=True)
+    updated_value = models.CharField(max_length=255, blank=True, null=True)
+
+
+    #     # def __str__(self):
+    #     #     return '{}_{}_{}'.format(self.transaction_currency, self.counter_currency, self.date)
+
+    class Meta:
+        verbose_name = 'Transaction Change Log'
+        verbose_name_plural = 'Transaction Change Logs'

@@ -1,24 +1,25 @@
+from django.db.models import Sum
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 
+from transactions.serializers.nested_serializers import TransactionOneToOneSerializer
 
-from transactions.serializers import TransactionOneToOneSerializer
-
-from .models import (
+from ..models import (
     Bucket,
     Expense,
     Label,
     Icon
 )
-from django.db.models import Sum
 
 
-#  Icons
-###########################
+# Icons
+# ------------------------------------------------------------------------------
 
 class IconListSerializer(serializers.ModelSerializer):
-    """ List all icons """
-    """ Also used as nested serializer for LabelListSerializer and  """
+    """
+    List all icons
+    Also used as nested serializer for LabelListSerializer 
+    """
 
     class Meta:
         model = Icon
@@ -29,11 +30,15 @@ class IconListSerializer(serializers.ModelSerializer):
             'icon_object'
         )
 
-#  Buckets
-###########################
+
+# Buckets
+# ------------------------------------------------------------------------------
 
 class BucketListSerializer(serializers.ModelSerializer):
-    """ List all buckets """
+    """
+    List all buckets
+    Also used as nested serializer for LabelListSerializer
+    """
 
     class Meta:
         model = Bucket
@@ -44,22 +49,36 @@ class BucketListSerializer(serializers.ModelSerializer):
         )
 
 
-#  Labels
-###########################
+# Labels
+# ------------------------------------------------------------------------------
 
 class LabelListSerializer(serializers.ModelSerializer):
-    """ List all labels  """
+    """
+    List all labels 
+    """
 
     icon = IconListSerializer(read_only=True)
     bucket = BucketListSerializer(read_only=True)
     
     class Meta:
         model = Label
-        fields = ('id', 'title', 'rank', 'icon', 'bucket', )
+        fields = (
+            'id',
+            'title',
+            'rank',
+            'icon',
+            'bucket'
+        )
+
+
+
+
 
 
 class LabelListAddInfoSerializer(serializers.ModelSerializer):
-    """ List all labels with additional information on sum and count """
+    """
+    List all labels with additional information on sum and count 
+    """
     """ Also used as nested serializer for BucketWithLabelsListSerializer """
 
     # transaction_count = serializers.SerializerMethodField()
@@ -91,7 +110,9 @@ class LabelListAddInfoSerializer(serializers.ModelSerializer):
 
 
 class LabelRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
-    """ Retrieve, update or destroy label """
+    """
+    Retrieve, update or destroy label
+    """
 
     # icon = IconListSerializer(read_only=True)
 
@@ -106,7 +127,9 @@ class LabelRetrieveUpdateDestroySerializer(serializers.ModelSerializer):
 
 
 class LabelCreateSerializer(serializers.ModelSerializer):
-    """ Create new label """
+    """
+    Create new label
+    """
 
     # icon = IconListSerializer(read_only=True)
 
@@ -203,3 +226,11 @@ class ExpenseBulkUpdateSerializer(serializers.ModelSerializer):
             'label'
         )
         list_serializer_class = ExpenseBulkListSerializer
+
+
+
+
+    
+
+
+

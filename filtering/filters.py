@@ -63,7 +63,7 @@ class TransactionFilterSet(filters.FilterSet):
     account_currency = ListFilter(field_name='account_currency', lookup_expr = 'in')
     category = ListFilter(field_name='category', lookup_expr = 'in')
     status = ListFilter(field_name='status', lookup_expr = 'in')
-    label = ListFilter(field_name='label', lookup_expr = 'in')
+    expense__label = ListFilter(field_name='expense__label', lookup_expr = 'in')
     title = filters.CharFilter(field_name='title', lookup_expr = 'icontains')
     
     date_start = filters.DateFilter(field_name='date', lookup_expr = 'gte')

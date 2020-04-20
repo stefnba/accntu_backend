@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import (FX, Transaction)
+from .models import (FX, Transaction, TransactionChangeLog)
 
 class TransactionAdmin(admin.ModelAdmin):
     list_display = (
@@ -46,4 +46,5 @@ class FXAdmin(admin.ModelAdmin):
 
 admin.site.register(FX, FXAdmin)
 admin.site.register(Transaction, TransactionAdmin)
+admin.site.register(TransactionChangeLog)
 

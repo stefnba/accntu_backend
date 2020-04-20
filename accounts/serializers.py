@@ -29,3 +29,12 @@ class AccountFullListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = '__all__'
+
+
+
+class AccountForTransactionSerializer(serializers.ModelSerializer):
+    " Provide account info for Transaction "
+    
+    class Meta:
+        model = Account
+        fields = ('title','id')

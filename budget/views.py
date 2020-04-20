@@ -23,7 +23,7 @@ from .models import (
     Icon,
 )
 
-from .serializers import (
+from .serializers.common_serializers import (
     BucketListSerializer,
     BucketWithLabelsListSerializer,
     ExpenseListSerializer,

@@ -14,7 +14,7 @@ from .models import (
     Transaction
 )
 
-from .serializers import (
+from .serializers.common_serializers import (
     TransactionBulkUpdateSerializer,
     TransactionListSerializer,
     TransactionRetrieveUpdateSerializer,
