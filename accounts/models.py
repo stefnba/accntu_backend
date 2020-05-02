@@ -2,7 +2,6 @@ from django.db import models
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 
-from importing.models import CsvXlsImportDetails
 
 # Create your models here.
 
@@ -32,7 +31,7 @@ class Provider(models.Model):
     access_type = models.CharField(max_length=255, choices=ACCESS_TYPE_CHOICES)
     provider_type = models.CharField(max_length=255, choices=PROVIDER_TYPE_CHOICES)
     currency = models.CharField(max_length=3)  
-    csvxls_import = models.ForeignKey('importing.CsvXlsImportDetails', on_delete=models.SET_NULL, blank=True, null=True)
+    import_details = models.ForeignKey('importing.ImportDetails', on_delete=models.SET_NULL, blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.provider, self.country)
@@ -61,6 +60,21 @@ class Account(models.Model):
     
     def __str__(self):
         return self.title
+
+
+class Token_Data(models.Model):
+    account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
+    access_token = models.CharField(max_length=255)
+    refresh_token = models.CharField(max_length=255)
+    token_type = models.CharField(max_length=255)
+    host_url = models.CharField(max_length=255)
+    created_at = models.DateTimeField()
+    expires_at = models.DateTimeField()
+    expires_in = models.IntegerField()
+    raw_token_data = JSONField()
+
+    class Meta:
+        ordering = ['created_at']
 
 
 class Sub_Account(models.Model):

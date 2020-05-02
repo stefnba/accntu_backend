@@ -37,7 +37,7 @@ class Parser(object):
 
     def extract_currency(self, item):
         """
-
+        Get currency (e.g. EUR or €) from string
         """
 
         currency = re.search(r'([$€£]{1}|[a-zA-Z]{3})', str(item))
@@ -49,6 +49,9 @@ class Parser(object):
 
 
     def convert_currency(self, item):
+        """
+        Translate currency symbol into ISO code
+        """
         
         if item in '$€£':
             
@@ -104,7 +107,6 @@ class Parser(object):
         
         return round(float(item), 2)
 
-
     # Clean date
     def clean_title(self, item):
 
@@ -120,7 +122,6 @@ class Parser(object):
         item = remove_umlaut(item)
         
         return item
-
 
 
     def read_file(self):
@@ -151,6 +152,10 @@ class Parser(object):
                 self.file,
                 skiprows = self.parser_dict['skiprows']    
             )
+
+        elif self.parser_dict['file_type'] == 'dict':
+            self.import_df = pd.DataFrame(self.file)
+            print('dict')
         
         else:
             # TODO Raise error
@@ -159,6 +164,21 @@ class Parser(object):
         # drop some colums (e.g. abgerechnet oder nicht), necessary i.a. for key generation
         self.import_df = self.import_df.drop(columns=list(self.parser_dict['cols_to_drop']))
 
+
+    def clean_date(self, item):
+        """
+        :param item: date to be parsed to date object
+        :return: pandas date object
+        """
+
+        date_format = self.parser_dict['date_format']
+
+        if date_format == 'timestamp_ms':
+            return pd.to_datetime(item, unit='ms').date()
+
+        else:
+            return pd.to_datetime(item, format=date_format).dt.date
+
     
     def _initiate_parsing_process(self):
         """
@@ -166,7 +186,50 @@ class Parser(object):
         """
 
         # Clean date
-        self.df['date'] = pd.to_datetime(self.import_df[self.parser_dict['date_col']], format=self.parser_dict['date_format']).dt.date
+        self.df['date'] = self.import_df[self.parser_dict['date_col']].apply(self.clean_date)
+
+        
+
+        # Clean title
+        # self.import_df[self.parser_dict['title_col']] = self.import_df[self.parser_dict['title_col']].fillna(None)
+        self.df['title'] = np.where(
+            self.import_df[self.parser_dict['title_col']].notna(),
+            self.import_df[self.parser_dict['title_col']].apply(self.clean_title),
+            self.import_df[self.parser_dict['title_fallback_col']].apply(self.clean_title)
+        )
+
+
+        # Clean counterparty
+        if self.parser_dict['counterparty_col'] is not 'nan':
+            # self.df['counterparty'] = self.import_df[self.parser_dict['counterparty_col']].apply(self.clean_title)
+            self.df['counterparty'] = np.where(
+            self.import_df[self.parser_dict['counterparty_col']].notna(),
+            self.import_df[self.parser_dict['counterparty_col']].apply(self.clean_title),
+            self.import_df[self.parser_dict['counterparty_fallback_col']].apply(self.clean_title)
+        )
+        else:
+            self.df['counterparty'] = None
+
+        
+        # Clean IBAN and BIC text
+        if self.parser_dict['iban_col'] is not None:
+            self.df['iban'] = self.import_df[self.parser_dict['iban_col']]
+        else:
+            self.df['iban'] = None
+
+        if self.parser_dict['bic_col'] is not None:
+            self.df['bic'] = self.import_df[self.parser_dict['bic_col']]
+        else:
+            self.df['bic'] = None
+
+
+        # Clean reference text
+        if self.parser_dict['reference_text_col'] is not None:
+            self.df['reference_text'] = self.import_df[self.parser_dict['reference_text_col']].apply(self.clean_title)
+        else:
+            self.df['reference_text'] = None
+
+        
 
 
         # Clean account currency
@@ -192,15 +255,15 @@ class Parser(object):
 
         # where spending currency is NaN, fallback to account currency
         if self.parser_dict['spending_currency_fallback_to_account_currency']:
-            self.df['spending_currency'] = np.where(self.df['spending_currency'] == 'nan', self.parser_dict['account_currency_default'], self.df['spending_currency'])
+            self.df['spending_currency'] = np.where(
+                self.df['spending_currency'].isna(),
+                self.parser_dict['account_currency_default'],
+                self.df['spending_currency']
+            )
 
         
         # User currency
         self.df['user_currency'] = self.user_currency
-
-
-        # Clean title
-        self.df['title'] = self.import_df[self.parser_dict['title_col']].apply(self.clean_title)
 
 
         # Clean country
@@ -235,8 +298,6 @@ class Parser(object):
             self.df['spending_amount'] = np.where(self.df['spending_amount'] == 0, self.df['account_amount'], self.df['spending_amount'])
 
 
-
-
         # Spending to account rate
         self.df['spending_account_rate'] = round(self.df['account_amount'] / self.df['spending_amount'], 8)
 
@@ -250,49 +311,32 @@ class Parser(object):
 
         # Importing
         self.df['importing'] = self.importing_id
-
-
-        # Clean counterparty
-        if self.parser_dict['counterparty_col'] is not None:
-            self.df['counterparty'] = self.import_df[self.parser_dict['counterparty_col']].apply(self.clean_title)
-        else:
-            self.df['counterparty'] = None
-        
-        # Clean reference text
-        if self.parser_dict['reference_text_col'] is not None:
-            self.df['reference_text'] = self.import_df[self.parser_dict['reference_text_col']].apply(self.clean_title)
-        else:
-            self.df['reference_text'] = None
-
-        
-        # Clean IBAN and BIC text
-        if self.parser_dict['iban_col'] is not None:
-            self.df['iban'] = self.import_df[self.parser_dict['iban_col']]
-        else:
-            self.df['iban'] = None
-
-        if self.parser_dict['bic_col'] is not None:
-            self.df['bic'] = self.import_df[self.parser_dict['bic_col']]
-        else:
-            self.df['bic'] = None
-
-
         
 
         # Account
         self.df['account'] = self.account['account_id']
 
 
-        # Create key with occs and assign to transaction
-        self.df['all_cols'] = self.import_df.astype(str).values.sum(axis=1)
-        self.df['cum_count'] = self.df.groupby('all_cols').cumcount().astype(str)
-        key = self.df['all_cols'] + self.df['cum_count']
-        self.df['hash_duplicate'] = key.apply(lambda item: hashlib.md5((item).encode('utf-8')).hexdigest())
+        # create hash_duplicate key
+        if self.parser_dict['hash_duplicate_col'] is None:
+            
+            # Create key with occs and assign to transaction
+            self.df['all_cols'] = self.import_df.astype(str).values.sum(axis=1)
+            self.df['cum_count'] = self.df.groupby('all_cols').cumcount().astype(str)
+            key = self.df['all_cols'] + self.df['cum_count']
+            self.df['hash_duplicate'] = key.apply(lambda item: hashlib.md5((item).encode('utf-8')).hexdigest())
+
+        else:
+            print('has hash_duplicate')
+            self.df['hash_duplicate'] = self.import_df[self.parser_dict['hash_duplicate_col']]
+
+        
 
 
     def parse(self):
         """
-        Initiate parsing process
+        Entry and exit method for APIParser
+        :return: dict with parsed transactions
         """
         
         # read file or data in memory
@@ -305,10 +349,11 @@ class Parser(object):
         return self.df.to_dict('records')
 
     
-    
-
-
     def save_csv(self, type):
+        """
+        :return: memory file
+        """
+
         buf = StringIO()
 
         if type == 'raw':
@@ -320,10 +365,3 @@ class Parser(object):
         buf.seek(0)
 
         return buf
-
-
-
-
-
-
-

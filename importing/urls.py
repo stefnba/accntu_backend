@@ -22,7 +22,5 @@ urlpatterns = [
     path('upload/', Upload.as_view(), name='import-upload'),
     path('imports/', ImportList.as_view(), name='import-list'),
 
-
-
     path('import/test/', Test.as_view(), name='import-test'),
 ]

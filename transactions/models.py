@@ -51,6 +51,7 @@ class Transaction(models.Model):
     counterparty = models.CharField(max_length=255, blank=True, null=True)
     reference_text = models.CharField(max_length=255, blank=True, null=True)
     country = models.CharField(max_length=3, blank=True, null=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
     
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=10, blank=True, null=True) 
     # label = models.ForeignKey(Label, on_delete=models.SET_NULL, blank=True, null=True, related_name='label')

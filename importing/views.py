@@ -52,7 +52,8 @@ class ImportViaAPI(APIView):
 
         # TODO remove here
         # accounts = [14]
-        accounts = [18]
+        # accounts = [18]
+        accounts = [10]
         user = 1
 
         if accounts and user:
@@ -200,27 +201,15 @@ class ImportList(ListAPIView):
 
 
 class Test(APIView):
+    """
+    Test View
+    """
 
     def get(self, request):
 
-        # account_id = 14
 
-        # qs = Account.objects.get(id=account_id)
-
-        # parser_dict = qs.provider.csvxls_import.__dict__
-
-
-        # account = {
-        #     'account_id': account_id,
-        #     'account_name': 'Barclaycard'
-        # }
+        t = 10
         
-        # # p = Parser(parser_dict=parser_dict, file='importing/Barclaycard.xlsx', account=account)
-        # p = ParserNew(parser_dict=parser_dict, file='importing/M&M.csv', account=account)
-        # data_parsed = p.parse()
-        
-        
-        # print(data_parsed)
-        return Response('txt', status=status.HTTP_201_CREATED)
+        return Response(t, status=status.HTTP_201_CREATED)
         
 

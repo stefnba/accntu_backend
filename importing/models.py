@@ -2,18 +2,31 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import models
 
-from datetime import datetime, date
-import os
+from .utils.models_utils import (
+    get_file_path,
+    get_image_path,
+    get_upload_file_path,
+)
 
 # from accounts.models import Account
 
 # Create your models here.
 
-class CsvXlsImportDetails(models.Model):
+
+class ImportDetails(models.Model):
+
+    DATE_FORMAT_CHOICES = (
+            ('%d.%m.%Y','%d.%m.%Y'), 
+            # ('%d.%m.%y', str(datetime.now('%d.%m.%y'))), 
+            ('%d.%m.%y', '11.03.20'), 
+            ('timestamp_ms', 'timestamp_ms'), 
+            ('timestamp', 'timestamp'), 
+        )
 
     TYPE_CHOICES = (
         ('xls','XLS'), 
         ('csv','CSV'),
+        ('dict','DICT'),
     )
 
     CSV_SEP_CHOICES = (
@@ -25,12 +38,6 @@ class CsvXlsImportDetails(models.Model):
         ('.','.'), 
         (',',','),
         ('\'','\''),
-    )
-
-    DATE_FORMAT_CHOICES = (
-        ('%d.%m.%Y','%d.%m.%Y'), 
-        # ('%d.%m.%y', str(datetime.now('%d.%m.%y'))), 
-        ('%d.%m.%y', '11.03.20'), 
     )
 
     name = models.CharField(max_length=255)
@@ -46,13 +53,15 @@ class CsvXlsImportDetails(models.Model):
 
     # Date
     date_col = models.CharField(max_length=255, blank=True, null=True) 
-    date_format = models.CharField(choices=DATE_FORMAT_CHOICES, max_length=10, blank=True, null=True) 
+    date_format = models.CharField(choices=DATE_FORMAT_CHOICES, max_length=255, blank=True, null=True) 
 
     # Title
     title_col = models.CharField(max_length=255, blank=True, null=True) 
+    title_fallback_col = models.CharField(max_length=255, blank=True, null=True) 
 
     # Country
     country_col = models.CharField(max_length=255, blank=True, null=True) 
+    city_col = models.CharField(max_length=255, blank=True, null=True) 
 
     # Status
     status_col = models.CharField(max_length=255, blank=True, null=True) 
@@ -89,15 +98,22 @@ class CsvXlsImportDetails(models.Model):
 
     # Reference text
     reference_text_col = models.CharField(max_length=255, blank=True, null=True) 
+    reference_text_fallback_col = models.CharField(max_length=255, blank=True, null=True) 
+
 
     # Counterparty
-    counterparty_col = models.CharField(max_length=255, blank=True, null=True) 
+    counterparty_col = models.CharField(max_length=255, blank=True, null=True)
+    counterparty_fallback_col = models.CharField(max_length=255, blank=True, null=True) 
+
+
+    # Hash key
+    hash_duplicate_col = models.CharField(max_length=255, blank=True, null=True) 
 
 
     class Meta:
         ordering = ['name',]
-        verbose_name = 'CSV XLS Import Details'
-        verbose_name_plural = 'CSV XLS Import Details'
+        verbose_name = 'Import Details'
+        verbose_name_plural = 'Import Details'
 
     def __str__(self):
         return str(self.name)
@@ -119,28 +135,6 @@ class NewImport(models.Model):
         return str(self.imported_at)
 
 
-
-# Set path and filename of imported csv file
-def get_file_path(instance, filename):
-    
-    account = str(instance.account)
-    dt = datetime.now()
-    user = instance.user.id
-
-    extension = os.path.splitext(filename)[1:]
-    filename_new = "{}_{}{:02d}{:02d}_{:02d}{:02d}{:02d}_{}.csv".format(
-                                            account, 
-                                            dt.year, 
-                                            dt.month, 
-                                            dt.day, 
-                                            dt.hour, 
-                                            dt.minute, 
-                                            dt.second, 
-                                            filename
-                                        )
-
-    return 'imports/{}/{}/{:02d}/{}/{}'.format(user, dt.year, dt.month, account, filename_new)
-
 class NewImportOneAccount(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     imported_at = models.DateTimeField(auto_now_add=True)
@@ -152,37 +146,12 @@ class NewImportOneAccount(models.Model):
     parsed_csv = models.FileField(upload_to=get_file_path, blank=True, null=True)
 
     class Meta:
-        ordering = ['imported_at',]
+        ordering = ['-imported_at',]
         verbose_name = 'Import per Account'
         verbose_name_plural = 'Imports per Account'
 
     def __str__(self):
         return str(self.imported_at)
-
-
-
-
-
-# Set path and filename of photo TAN image
-def get_image_path(instance, filename):
-    
-    account = str(instance.account)
-    dt = datetime.now()
-    user = instance.user.id
-
-    extension = os.path.splitext(filename)[1:]
-    filename_new = "{}_{}{:02d}{:02d}_{:02d}{:02d}{:02d}{}".format(
-                                            account, 
-                                            dt.year, 
-                                            dt.month, 
-                                            dt.day, 
-                                            dt.hour, 
-                                            dt.minute, 
-                                            dt.second, 
-                                            extension
-                                        )
-
-    return 'auth/photo_tan/{}/{}/{:02d}/{}'.format(user, dt.year, dt.month, filename_new)
 
 
 class PhotoTAN(models.Model):
@@ -195,32 +164,6 @@ class PhotoTAN(models.Model):
     class Meta:
         verbose_name = 'Photo TAN'
         verbose_name_plural = 'Photo TANs'
-
-
-
-
-# Set path and filename of imported csv file
-def get_upload_file_path(instance, filename):
-    
-    account = str(instance.account)
-    dt = datetime.now()
-    user = instance.user.id
-
-    extension = os.path.splitext(filename)[1:]
-    name = os.path.splitext(filename)[:1]
-    filename_new = "{}_{}{:02d}{:02d}_{:02d}{:02d}{:02d}_{}_upload_file{}".format(
-                                            account, 
-                                            dt.year, 
-                                            dt.month, 
-                                            dt.day, 
-                                            dt.hour, 
-                                            dt.minute, 
-                                            dt.second, 
-                                            name,
-                                            extension
-                                        )
-
-    return 'imports/{}/{}/{:02d}/{}/{}'.format(user, dt.year, dt.month, account, filename_new)
 
 
 class Upload(models.Model):

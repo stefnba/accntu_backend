@@ -4,7 +4,7 @@ from django.contrib import admin
 from .models import (
     NewImport,
     NewImportOneAccount,
-    CsvXlsImportDetails,
+    ImportDetails,
     PhotoTAN,
     Upload
 )
@@ -39,6 +39,6 @@ class ImportOneAccountAdmin(admin.ModelAdmin):
 
 admin.site.register(NewImport, ImportAdmin)
 admin.site.register(NewImportOneAccount, ImportOneAccountAdmin)
-admin.site.register(CsvXlsImportDetails)
+admin.site.register(ImportDetails)
 admin.site.register(PhotoTAN)
 admin.site.register(Upload)

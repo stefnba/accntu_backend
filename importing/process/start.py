@@ -7,13 +7,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
 from accounts.models import Account
-from ..models import NewImport, NewImportOneAccount, CsvXlsImportDetails, Upload
+from ..models import NewImport, NewImportOneAccount, ImportDetails, Upload
 
 # from ..providers.providers import provider_classes
 
 
 from .parsing.parser import Parser
 from .process_utils import pusher_trigger
+from .api.api_providers import api_providers
 
 
 
@@ -47,19 +48,24 @@ def retrieve_account_transactions(
         account=account
     )
 
+
+    # get parser_dict from db
+    parser_qs = ImportDetails.objects.filter(provider__account__id=account_id).first()
+    if not parser_qs:
+        return []
+    parser_dict = model_to_dict(parser_qs)
+
+
     # if upload id is provided then type upload
     if upload:
-        print(123)
+        print('upload')
         
         u = Upload.objects.filter(id=upload).first()
-        parser_qs = CsvXlsImportDetails.objects.filter(provider__account__id=account_id).first()
 
-        # no parser or upload found in db
-        if not u and not parser_qs:
+        # no upload found in db
+        if not u:
             return []
-        
-        parser_dict = model_to_dict(parser_qs)
-        
+
         if parser_dict['file_type'] == 'csv':
             transactions_file = str(u.upload_file.read().decode(encoding=parser_dict['file_encoding']))
         else:
@@ -67,9 +73,6 @@ def retrieve_account_transactions(
 
     # if None then type import
     else:
-
-        # TODO what is this here?
-        key = account.provider.key
 
         # credentials
         # TODO encryption
@@ -82,22 +85,28 @@ def retrieve_account_transactions(
         Web scraping access
         """
         if account.provider.access_type == 'scr':
-            
-            parser_qs = CsvXlsImportDetails.objects.filter(provider__account__id=account_id).first()
-
-            # no parser found in db
-            if not parser_qs:
-                return []
-
-            parser_dict = model_to_dict(parser_qs)
+            print('scrapping')
+            pass
 
 
         """
         API access
         """
         if account.provider.access_type == 'api':
-            transactions_file = []
+            print('api')
 
+            print(account.provider.key)
+
+            APIClass = api_providers[account.provider.key]
+
+            api = APIClass(
+                account_id,
+                login,
+                pin
+            )
+
+            transactions_file = api.get_transactions()
+            
 
 
 
@@ -112,7 +121,7 @@ def retrieve_account_transactions(
         file=transactions_file,
         account={
             'account_id': account_id,
-            'account_name': 'TEST_NAME'
+            'account_name': 'TEST_NAME' # TODO
         },
         importing_id=new_import_one_account.id,
         user_currency=user_currency
@@ -120,8 +129,6 @@ def retrieve_account_transactions(
 
     # returns dict
     transactions_parsed = parser.parse()
-
-    # print(parser.raw_csv())
 
     # trigger parsed msg
     pusher_trigger(
