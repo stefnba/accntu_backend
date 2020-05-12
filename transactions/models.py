@@ -131,7 +131,7 @@ class Transaction(models.Model):
 
     
 class TransactionChangeLog(models.Model):
-    transaction = models.ForeignKey('transactions.Transaction', on_delete=models.SET_NULL, blank=True, null=True)
+    transaction = models.ForeignKey('transactions.Transaction', on_delete=models.CASCADE, blank=True, null=True)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now_add=True)
     field = models.CharField(max_length=255)

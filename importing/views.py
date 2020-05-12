@@ -9,7 +9,7 @@ from rest_framework.generics import (
     ListAPIView,
 )
 
-from .tasks import do_import
+from .tasks import initiate_import
 from .models import NewImport, NewImportOneAccount, PhotoTAN, Upload as NewUpload
 from .serializers import ImportListSerializer
 
@@ -25,8 +25,8 @@ from .providers.scrapping.utils import hash_url
 
 class ImportViaAPI(APIView):
     """
-    GET: List all importable accounts for given user
-    POST: Initiate new import process for provided accounts
+    :GET: List all importable accounts for given user
+    :POST: Initiate new import process for provided accounts
     """
 
     def get(self, request):
@@ -43,7 +43,7 @@ class ImportViaAPI(APIView):
     def post(self, request):
         """
         Initiate new import process for provided accounts
-        If account list and user is provided, do_import in tasks.py is called
+        If account list and user is provided, function initiate_import in tasks.py is called
         and task_id is returned for view ImportViaAPIRunning
         """
 
@@ -53,12 +53,16 @@ class ImportViaAPI(APIView):
         # TODO remove here
         # accounts = [14]
         # accounts = [18]
-        accounts = [10]
+        accounts = [20]
         user = 1
 
         if accounts and user:
+            
             # start import process in tasks.py
-            task = do_import.delay(accounts=accounts, user=user)
+            task = initiate_import.delay(
+                accounts=accounts,
+                user=user
+            )
             
             res = {
                 'task_id': task.id,
@@ -137,6 +141,9 @@ class ImportViaAPITwoFactorRetrievePhotoTAN(APIView):
 
 
 class Upload(APIView):
+    """
+
+    """
 
     def post(self, request):
 

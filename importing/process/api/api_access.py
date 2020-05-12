@@ -25,6 +25,10 @@ class BaseApiAccess(object):
     Api class can be imported as a library in order to use it within applications
     """
 
+    GET = "get"
+    POST = "post"
+
+
     base_url = None
     
     auth_url = None
@@ -51,10 +55,25 @@ class BaseApiAccess(object):
         self.token_data = None
 
 
-    def get_transactions(self):
+    def get_transactions(self, sub_accounts=[], first_import_success=False, last_import=None):
         """
         Get a list of transactions.
+        :param sub_accounts: list with queryset of Sub-Accounts
+        :param first_import_success: True if initial import with all transactions has been conducted, otherwise false
+        :param last_import: date of last import in datetime format
+        :return: list of transactions as returned by api
         """
+
+        if last_import is None:
+
+            accounts = self.get_accounts()
+
+            print(accounts)
+            
+            return False
+            # TODO get all transactions
+            
+
 
         return self._do_request(GET, self.transactions_endpoint)
 
@@ -96,9 +115,9 @@ class BaseApiAccess(object):
         url = self.base_url + url
 
         # do api call
-        if method is GET:
+        if method is self.GET:
             response = requests.get(url, headers=headers, json=data)
-        elif method is POST:
+        elif method is self.POST:
             response = requests.post(url, headers=headers, json=data)
         else:
             raise ValueError("Unsupported method: {}".format(method))
@@ -184,6 +203,11 @@ class BaseApiAccess(object):
         # do mfa approval if applicable
         if self.mfa_required:
             return self._request_mfa_approval(response)
+        
+
+        # if not mfa approval applicable
+        response.raise_for_status()
+        return response
 
 
     def _request_mfa_approval(self, response):

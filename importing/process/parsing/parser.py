@@ -177,7 +177,7 @@ class Parser(object):
             return pd.to_datetime(item, unit='ms').date()
 
         else:
-            return pd.to_datetime(item, format=date_format).dt.date
+            return pd.to_datetime(item, format=date_format).date()
 
     
     def _initiate_parsing_process(self):
@@ -192,32 +192,40 @@ class Parser(object):
 
         # Clean title
         # self.import_df[self.parser_dict['title_col']] = self.import_df[self.parser_dict['title_col']].fillna(None)
-        self.df['title'] = np.where(
-            self.import_df[self.parser_dict['title_col']].notna(),
-            self.import_df[self.parser_dict['title_col']].apply(self.clean_title),
-            self.import_df[self.parser_dict['title_fallback_col']].apply(self.clean_title)
-        )
+        if self.parser_dict['title_fallback_col'] is None:
+             self.df['title'] = self.import_df[self.parser_dict['title_col']].apply(self.clean_title)
+        else:
+            self.df['title'] = np.where(
+                self.import_df[self.parser_dict['title_col']].notna(),
+                self.import_df[self.parser_dict['title_col']].apply(self.clean_title),
+                self.import_df[self.parser_dict['title_fallback_col']].apply(self.clean_title)
+            )
 
 
         # Clean counterparty
-        if self.parser_dict['counterparty_col'] is not 'nan':
+        if self.parser_dict['counterparty_col'] is not None:
             # self.df['counterparty'] = self.import_df[self.parser_dict['counterparty_col']].apply(self.clean_title)
-            self.df['counterparty'] = np.where(
-            self.import_df[self.parser_dict['counterparty_col']].notna(),
-            self.import_df[self.parser_dict['counterparty_col']].apply(self.clean_title),
-            self.import_df[self.parser_dict['counterparty_fallback_col']].apply(self.clean_title)
-        )
+            if self.parser_dict['counterparty_fallback_col'] is not None:
+                self.df['counterparty'] = np.where(
+                    self.import_df[self.parser_dict['counterparty_col']].notna(),
+                    self.import_df[self.parser_dict['counterparty_col']].apply(self.clean_title),
+                    self.import_df[self.parser_dict['counterparty_fallback_col']].apply(self.clean_title),
+                )
+            else:
+                self.import_df[self.parser_dict['counterparty_col']].apply(self.clean_title)
         else:
             self.df['counterparty'] = None
 
         
         # Clean IBAN and BIC text
         if self.parser_dict['iban_col'] is not None:
+            self.import_df[self.parser_dict['iban_col']] = self.import_df[self.parser_dict['iban_col']].replace({np.nan: None})
             self.df['iban'] = self.import_df[self.parser_dict['iban_col']]
         else:
             self.df['iban'] = None
 
         if self.parser_dict['bic_col'] is not None:
+            self.import_df[self.parser_dict['bic_col']] = self.import_df[self.parser_dict['bic_col']].replace({np.nan: None})
             self.df['bic'] = self.import_df[self.parser_dict['bic_col']]
         else:
             self.df['bic'] = None
@@ -228,8 +236,6 @@ class Parser(object):
             self.df['reference_text'] = self.import_df[self.parser_dict['reference_text_col']].apply(self.clean_title)
         else:
             self.df['reference_text'] = None
-
-        
 
 
         # Clean account currency
@@ -268,9 +274,17 @@ class Parser(object):
 
         # Clean country
         if self.parser_dict['country_col'] is not None:
+            self.import_df[self.parser_dict['country_col']] = self.import_df[self.parser_dict['country_col']].replace({np.nan: None})
             self.df['country'] = self.import_df[self.parser_dict['country_col']]
         else:
             self.df['country'] = None
+
+        # Clean city
+        if self.parser_dict['city_col'] is not None:
+            self.import_df[self.parser_dict['city_col']] = self.import_df[self.parser_dict['city_col']].replace({np.nan: None})
+            self.df['city'] = self.import_df[self.parser_dict['city_col']]
+        else:
+            self.df['city'] = None
 
 
         # Clean status

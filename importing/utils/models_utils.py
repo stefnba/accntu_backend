@@ -65,7 +65,8 @@ def get_upload_file_path(instance, filename):
 
     extension = os.path.splitext(filename)[1:]
     name = os.path.splitext(filename)[:1]
-    filename_new = "{}_{}{:02d}{:02d}_{:02d}{:02d}{:02d}_{}_upload_file{}".format(
+
+    filename_new = "{}_{}{:02d}{:02d}_{:02d}{:02d}{:02d}_upload_file{}".format(
                                             account_key, 
                                             dt.year, 
                                             dt.month, 
@@ -73,7 +74,6 @@ def get_upload_file_path(instance, filename):
                                             dt.hour, 
                                             dt.minute, 
                                             dt.second, 
-                                            name,
                                             extension
                                         )
 

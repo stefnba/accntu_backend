@@ -15,7 +15,8 @@ class ImportAdmin(admin.ModelAdmin):
         'id',
         'user',
         'imported_at',
-        # 'nmbr_transactions',
+        'nmbr_transactions',
+        'import_success',
     )
 
     list_filter = (

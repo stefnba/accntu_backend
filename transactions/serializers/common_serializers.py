@@ -23,8 +23,7 @@ class TransactionListSerializer(serializers.ModelSerializer):
 
     account = AccountForTransactionSerializer(read_only=True) 
     expense = ExpenseForTransactionListSerializer(read_only=True) 
-    
-    
+
     class Meta:
         model = Transaction
         fields = (
@@ -67,6 +66,9 @@ class TransactionRetrieveUpdateSerializer(serializers.ModelSerializer):
     # gender = serializers.ChoiceField(choices=(('private','Private'),))
 
 
+    account = AccountForTransactionSerializer(read_only=True) 
+
+
     class Meta:
         model = Transaction
         fields = (
@@ -77,6 +79,7 @@ class TransactionRetrieveUpdateSerializer(serializers.ModelSerializer):
             'bic',
             'counterparty',
             'status',
+            'account',
             # 'status_readable',
             'category',
             # 'category_readable',
@@ -88,6 +91,7 @@ class TransactionRetrieveUpdateSerializer(serializers.ModelSerializer):
             'account_user_rate',
             'user_amount',
             'user_currency',
+            'reference_text',
             # 'company_type_name',
         )
         read_only_fields = (

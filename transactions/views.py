@@ -28,12 +28,14 @@ from filtering.filters import TransactionFilterSet
 # Create your views here.
 
 class TransactionList(ListAPIView):
-    """ listing all transactions """
+    """
+    Listing all transactions
+    """
     
     queryset = Transaction.objects.select_related('account', 'expense', 'expense__label', 'expense__label__bucket', 'expense__label__icon')
     serializer_class = TransactionListSerializer
 
-    # pagination_class = StandardResultsSetPagination
+    pagination_class = StandardResultsSetPagination
     filterset_class = TransactionFilterSet
 
     # def get_queryset(self):

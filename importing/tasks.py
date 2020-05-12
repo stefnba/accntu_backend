@@ -1,22 +1,24 @@
 import threading
 from celery import shared_task, current_task, task
+from datetime import datetime
 
 from .models import NewImport, NewImportOneAccount
 from .providers.scrapping.utils import wait_for_tan
 from .serializers import ImportSerializer
-from .process.start import retrieve_account_transactions
+from .process.retriever import retrieve_account_transactions
 
 from .process.process_utils import pusher_trigger
 
 from django.core.exceptions import ObjectDoesNotExist
+from accounts.models import Account
 from users.models import Settings
 
 
 @task(bind=True)
-def do_import(self, accounts=[], user=None, upload=None):
+def initiate_import(self, accounts=[], user=None, upload=None):
     """
     Celery task triggered by view ImportViaAPI in views.py, handles threading of parallel import with calling
-    function retrieve_account_transactions as defined in process/start.py
+    function retrieve_account_transactions as defined in process/retriever.py
     After that, initiates serializer ImportSerializer in serializers.py
     """
 
@@ -30,7 +32,7 @@ def do_import(self, accounts=[], user=None, upload=None):
     )
 
     # get additional user information, like user currency
-    user_currency = Settings.objects.filter(user_id=1).first().user_currency
+    user_currency = Settings.objects.filter(user_id=user).first().user_currency
 
 
     # trigger start msg
@@ -95,20 +97,63 @@ def do_import(self, accounts=[], user=None, upload=None):
 
     if serializer.is_valid():
 
-        # save transactions and add user_id
+        # save transactions to db and add user_id
         saved = serializer.save(
             user_id=user,
         )
 
         # get number of saved transactions, False means that duplicate already existed in db
-        saved = [t for t in saved if t is not False]
-        nmbr_transactions = len(saved)
+        imported_trx = [trx for trx in saved if trx is not False]
+        nmbr_imported_trx = len(imported_trx)
 
 
         # update entire import object
         new_import.import_success = True
-        new_import.nmbr_transactions = nmbr_transactions
+        new_import.nmbr_transactions = nmbr_imported_trx
         new_import.save(update_fields=['import_success', 'nmbr_transactions'])
+
+        """
+        Update ech account import instances as well as account info like last_import and first_import_success
+        """
+
+        for import_account in accounts:
+
+            """
+
+            """
+            nmbr_imported_trx_account = len([trx for trx in imported_trx if trx.account_id is import_account])
+
+            new_import_one_account = NewImportOneAccount.objects.filter(
+                account_id=import_account,
+                new_import=new_import
+            )
+
+            if not new_import_one_account:
+                continue
+            
+            new_import_one_account.update(
+                nmbr_transactions=nmbr_imported_trx_account,
+                import_success=True,
+            )
+
+            if nmbr_imported_trx_account is 0:
+                print('No transactions have been imported for this account!')
+                continue
+
+            """
+            Update account
+            """
+
+            acc = Account.objects.filter(pk=import_account)
+
+            if not acc:
+                continue
+
+            acc.update(
+                last_import=datetime.now(),
+                first_import_success=True,
+            )
+
 
 
         # trigger success messages
@@ -118,14 +163,14 @@ def do_import(self, accounts=[], user=None, upload=None):
             { 
                 'msg': 'Import has been successful',
                 'progressbar': 100,
-                'count': nmbr_transactions
+                'count': nmbr_imported_trx
             }
         )
 
 
         return {
             'transactions': 'to come',
-            'nmbr': nmbr_transactions
+            'nmbr': nmbr_imported_trx
         }
 
 

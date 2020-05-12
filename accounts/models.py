@@ -50,7 +50,9 @@ class Account(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=255)
     provider = models.ForeignKey(Provider,on_delete=models.SET_NULL, blank=True, null=True)
-    provider_account_id = models.CharField(max_length=255, blank=True, null=True)
+    first_import_success = models.BooleanField(default=False)
+    sub_accounts_retrieved = models.BooleanField(default=False)
+    last_import = models.DateTimeField(blank=True, null=True)
 
 
     login = models.CharField(max_length=255, blank=True, null=True)
@@ -64,21 +66,26 @@ class Account(models.Model):
 
 class Token_Data(models.Model):
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
-    access_token = models.CharField(max_length=255)
-    refresh_token = models.CharField(max_length=255)
+    access_token = models.TextField()
+    refresh_token = models.TextField()
     token_type = models.CharField(max_length=255)
-    host_url = models.CharField(max_length=255)
+    host_url = models.CharField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField()
     expires_at = models.DateTimeField()
     expires_in = models.IntegerField()
     raw_token_data = JSONField()
 
+    def __str__(self):
+        return '{} - {}'.format(self.account, self.created_at)
+
     class Meta:
         ordering = ['created_at']
+        verbose_name = 'Account Token Data'
+        verbose_name_plural = 'Account Token Data'
 
 
 class Sub_Account(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
+    account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True, related_name='sub_account')
     provider_subaccount_id = models.CharField(max_length=255, blank=True, null=True)
     provider_subaccount_name = models.CharField(max_length=255, blank=True, null=True)
 

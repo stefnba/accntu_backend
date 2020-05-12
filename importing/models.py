@@ -21,6 +21,8 @@ class ImportDetails(models.Model):
             ('%d.%m.%y', '11.03.20'), 
             ('timestamp_ms', 'timestamp_ms'), 
             ('timestamp', 'timestamp'), 
+            ('datetime', 'datetime'), 
+            ('%Y-%m-%dT%H:%M:%S.%fZ', '2020-05-05T06:45:19.247Z'), 
         )
 
     TYPE_CHOICES = (
@@ -140,7 +142,7 @@ class NewImportOneAccount(models.Model):
     imported_at = models.DateTimeField(auto_now_add=True)
     account = models.ForeignKey("accounts.Account", on_delete=models.SET_NULL, blank=True, null=True)
     nmbr_transactions = models.IntegerField(blank=True, null=True)
-    new_import = models.ForeignKey(NewImport, on_delete=models.SET_NULL, blank=True, null=True)
+    new_import = models.ForeignKey(NewImport, on_delete=models.CASCADE, blank=True, null=True)
     import_success = models.BooleanField(default=False)
     raw_csv = models.FileField(upload_to=get_file_path, blank=True, null=True)
     parsed_csv = models.FileField(upload_to=get_file_path, blank=True, null=True)

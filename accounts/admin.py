@@ -4,7 +4,8 @@ from django.contrib import admin
 from .models import (
     Account,
     Provider,
-    Sub_Account
+    Sub_Account,
+    Token_Data
 )
 
 class AccountAdmin(admin.ModelAdmin):
@@ -18,3 +19,4 @@ class AccountAdmin(admin.ModelAdmin):
 admin.site.register(Account, AccountAdmin)
 admin.site.register(Provider)
 admin.site.register(Sub_Account)
+admin.site.register(Token_Data)

@@ -33,7 +33,7 @@ def retrieve_account_transactions(
     """
 
     # retrieve account info
-    account = Account.objects.filter(id=account_id).first()
+    account = Account.objects.prefetch_related('sub_account').filter(id=account_id).first()
 
     # continue with next account, return zero transactions
     if not account:
@@ -58,7 +58,7 @@ def retrieve_account_transactions(
 
     # if upload id is provided then type upload
     if upload:
-        print('upload')
+        print('Import via upload')
         
         u = Upload.objects.filter(id=upload).first()
 
@@ -85,7 +85,7 @@ def retrieve_account_transactions(
         Web scraping access
         """
         if account.provider.access_type == 'scr':
-            print('scrapping')
+            print('Account requires scrapping for query of transactions')
             pass
 
 
@@ -93,9 +93,7 @@ def retrieve_account_transactions(
         API access
         """
         if account.provider.access_type == 'api':
-            print('api')
-
-            print(account.provider.key)
+            print('Account requires API access for query of transactions')
 
             APIClass = api_providers[account.provider.key]
 
@@ -105,11 +103,18 @@ def retrieve_account_transactions(
                 pin
             )
 
-            transactions_file = api.get_transactions()
-            
+            transactions_file = api.get_transactions(
+                sub_accounts=list(account.sub_account.all()),
+                first_import_success=account.first_import_success,
+                last_import=account.last_import,
+            )
 
+            # exit if transactions_file was no success
+            if not transactions_file:
+                print('Exit since transactions_file was no success')
+                return False
 
-
+    print(transactions_file)
 
     """
     Parse raw transactions into importable transactions
@@ -141,110 +146,20 @@ def retrieve_account_transactions(
     )
 
     """
-    Update account import
+    Update account import info
     """
         
-    new_import_one_account.import_success = True
-    new_import_one_account.nmbr_transactions = len(transactions_parsed)
-    new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions', 'raw_csv'])
+    # new_import_one_account.import_success = True
+    # new_import_one_account.nmbr_transactions = len(transactions_parsed)
+    # new_import_one_account.save(update_fields=['import_success', 'nmbr_transactions', 'raw_csv'])
     
     # save raw and parsed csv file to db (file is used to distinguish both files)
     new_import_one_account.raw_csv.save('raw', parser.save_csv('raw'))
     new_import_one_account.parsed_csv.save('parsed', parser.save_csv('parsed'))
 
 
-    # final step: append transactions of that account to list importable_transactions
+    """
+    FINAL STEP:
+    Append transactions of that account to list importable_transactions
+    """
     importable_transactions.extend(transactions_parsed)
-    
-
-
-
-
-
-
-
-
-"""
-def OLD():    
-    Provider = provider_classes[key]
-
-    pusher_client.trigger(task_id, pusher_event_name, {
-        'message': '{}: import initiated ...'.format(account.title)
-    })
-        
-    # actual retrival of transactions through API or scrapping
-    retriever = Provider()
-
-    # account login
-    login = retriever.login(login, pin, login_sec)
-
-    # check and execute two factor
-    if hasattr(retriever, 'login_two_factor'):
-
-        url = retriever.login_two_factor(user, account_id)
-
-        pusher_client.trigger(task_id, pusher_event_name, {
-            'message': '{}: waiting for Two-Factor Auth...'.format(account.title)
-        })
-        
-        pusher_client.trigger(task_id, 'two_factor', {
-            'two_factor': {
-                'account': account_id,
-                'task': task_id,
-                'tan_id': url
-            }
-        })
-
-        tan = wait_for_tan(user, account_id, task_id)
-
-        if tan:
-            pusher_client.trigger(task_id, pusher_event_name, {
-                'message': '{}: TAN submitted...'.format(account.title)
-            })
-            
-            retriever.login_two_factor_submit_tan(tan)
-        
-        else:
-            login = False
-
-            import_error(task_id, "{}: TAN submission failed!".format(account.title))
-            
-            # continue with next account
-            return []
-
-
-    if login:
-        pusher_client.trigger(task_id, pusher_event_name, {
-            'message': '{}: login successful!'.format(account.title)
-        })
-
-    
-    # if login not successful
-    else:
-        import_error(task_id, "{}: login not successful!".format(account.title))
-        
-        # continue with next account
-        return []
-
-    transactions_raw = retriever.get_raw_transactions(import_id=new_import_one_account.pk, csv_meta=account.provider.csv_meta)
-
-    nmbr_transactions = len(transactions_raw)
-    
-    if nmbr_transactions > 0:
-        pusher_client.trigger(task_id, pusher_event_name, {
-            'message': '{}: {} transactions retrieved'.format(account.title, len(transactions_raw))
-        })
-
-    else:
-        import_error(task_id, "{}: no transactions retrieved!".format(account.title))
-
-        # continue with next account
-        return []
-
-
-    
-
-)
-
-
-"""
