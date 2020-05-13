@@ -79,7 +79,6 @@ class ImportViaAPI(APIView):
         }, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class ImportViaAPIRunning(APIView):
     """
     Get status of running task based on task id
@@ -95,7 +94,6 @@ class ImportViaAPIRunning(APIView):
         }
 
         return Response(res, status=status.HTTP_201_CREATED)
-
 
 
 class ImportViaAPITwoFactorSubmitTAN(APIView):
@@ -202,9 +200,6 @@ class ImportList(ListAPIView):
     serializer_class = ImportListSerializer
 
     # filterset_class = TransactionFilterSet
-
-
-
 
 
 class Test(APIView):

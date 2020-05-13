@@ -91,7 +91,9 @@ class N26_API(BaseApiAccess):
     
     auth_url = 'https://api.tech26.de'
     auth_endpoint = "/oauth/token"
-    auth_headers = {"Authorization": "Basic bXktdHJ1c3RlZC13ZHBDbGllbnQ6c2VjcmV0"}
+    auth_headers = {
+        "Authorization": "Basic bXktdHJ1c3RlZC13ZHBDbGllbnQ6c2VjcmV0"
+    }
     mfa_required = True
     
     request_endpoint = None
