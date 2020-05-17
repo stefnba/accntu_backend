@@ -125,7 +125,7 @@ class ImportDetails(models.Model):
 class NewImport(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True)
     imported_at = models.DateTimeField(auto_now_add=True)
-    nmbr_transactions = models.IntegerField(blank=True, null=True)
+    nmbr_transactions = models.IntegerField(default=0)
     import_success = models.BooleanField(default=False)
 
     class Meta:

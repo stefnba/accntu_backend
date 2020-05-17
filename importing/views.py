@@ -9,6 +9,7 @@ from rest_framework.generics import (
     ListAPIView,
 )
 
+from accounts.models import Account
 from .tasks import initiate_import
 from .models import NewImport, NewImportOneAccount, PhotoTAN, Upload as NewUpload
 from .serializers import ImportListSerializer
@@ -34,17 +35,23 @@ class ImportViaAPI(APIView):
         List all importable accounts for given user
         """
         
-        # TODO list all api and scrapping accounts here
+        accounts = Account.objects.filter(
+                provider__access_type__in=['api']
+            ).values_list('id', flat=True)
 
-        accounts = [1, 2, 3]
+        res = {
+            'results': accounts,
+        }
         
-        return Response(accounts, status=status.HTTP_200_OK)
+        return Response(res, status=status.HTTP_200_OK)
+
 
     def post(self, request):
         """
         Initiate new import process for provided accounts
         If account list and user is provided, function initiate_import in tasks.py is called
         and task_id is returned for view ImportViaAPIRunning
+        :return: task_id that can be queried with view ImportViaAPIRunning or error
         """
 
         accounts = request.data.get('accounts', None)
@@ -70,8 +77,8 @@ class ImportViaAPI(APIView):
                 'respone': 'IMPORT_STARTED'
             }
 
-            # return task id -> can be queried with view ImportViaAPIRunning
             return Response(res, status=status.HTTP_201_CREATED)
+
 
         return Response({
             'err_msg': 'No accounts provided!',
@@ -125,6 +132,9 @@ class ImportViaAPITwoFactorSubmitTAN(APIView):
 
 
 class ImportViaAPITwoFactorRetrievePhotoTAN(APIView):
+    """
+
+    """
 
     def get(self, request, hash_url):
         try:

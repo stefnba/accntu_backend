@@ -17,18 +17,18 @@ class Parser(object):
 
     def __init__(
         self,
-        parser_dict,
-        file,
+        user,
         account,
-        importing_id,
-        user_currency
+        parser_dict,
+        importing,
+        file,
     ):
         
         self.parser_dict = parser_dict
         self.file = file
         self.account = account
-        self.importing_id = importing_id
-        self.user_currency = user_currency
+        self.importing = importing
+        self.user = user
 
 
         self.df = pd.DataFrame()
@@ -54,7 +54,6 @@ class Parser(object):
         """
         
         if item in '$€£':
-            
             curr_map = {
                     '$': 'USD',
                     '€': 'EUR',
@@ -155,7 +154,6 @@ class Parser(object):
 
         elif self.parser_dict['file_type'] == 'dict':
             self.import_df = pd.DataFrame(self.file)
-            print('dict')
         
         else:
             # TODO Raise error
@@ -187,7 +185,9 @@ class Parser(object):
 
         # Clean date
         self.df['date'] = self.import_df[self.parser_dict['date_col']].apply(self.clean_date)
+        
 
+        
         
 
         # Clean title
@@ -267,9 +267,10 @@ class Parser(object):
                 self.df['spending_currency']
             )
 
+
         
         # User currency
-        self.df['user_currency'] = self.user_currency
+        self.df['user_currency'] = self.user.add_user_info.user_currency
 
 
         # Clean country
@@ -317,18 +318,20 @@ class Parser(object):
 
 
         # Account to user rate
-        self.df['account_user_rate'] = self.df.apply(lambda row: FXRate.get_rate(date=row.date, transaction_currency=row.account_currency, counter_currency=self.user_currency), axis=1).astype(np.float64)
+        self.df['account_user_rate'] = self.df.apply(lambda row: FXRate.get_rate(date=row.date, transaction_currency=row.account_currency, counter_currency=self.user.add_user_info.user_currency), axis=1).astype(np.float64)
         
         
         # User amount
         self.df['user_amount'] = round(self.df['account_amount'] * self.df['account_user_rate'], 2)
 
         # Importing
-        self.df['importing'] = self.importing_id
-        
+        self.df['importing'] = self.importing.id
 
         # Account
-        self.df['account'] = self.account['account_id']
+        self.df['account'] = self.account.id
+
+        # User
+        self.df['user'] = self.user.id
 
 
         # create hash_duplicate key

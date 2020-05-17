@@ -31,7 +31,7 @@ class Provider(models.Model):
     access_type = models.CharField(max_length=255, choices=ACCESS_TYPE_CHOICES)
     provider_type = models.CharField(max_length=255, choices=PROVIDER_TYPE_CHOICES)
     currency = models.CharField(max_length=3)  
-    import_details = models.ForeignKey('importing.ImportDetails', on_delete=models.SET_NULL, blank=True, null=True)
+    import_details = models.ForeignKey('importing.ImportDetails', on_delete=models.SET_NULL, blank=True, null=True, related_name='import_details')
 
     def __str__(self):
         return '{} - {}'.format(self.provider, self.country)
@@ -49,7 +49,7 @@ class Account(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=255)
-    provider = models.ForeignKey(Provider,on_delete=models.SET_NULL, blank=True, null=True)
+    provider = models.ForeignKey("accounts.Provider", on_delete=models.SET_NULL, blank=True, null=True, related_name='provider_of_account')
     first_import_success = models.BooleanField(default=False)
     sub_accounts_retrieved = models.BooleanField(default=False)
     last_import = models.DateTimeField(blank=True, null=True)

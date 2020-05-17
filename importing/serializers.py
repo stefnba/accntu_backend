@@ -25,12 +25,14 @@ class ImportSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """
         Check if transactions already exists in db before saving
+        :return: calls super if transactions is new, if already exists in db, then False is returned
         """
 
         transaction = Transaction.objects.filter(hash_duplicate=validated_data['hash_duplicate'])
+        
         if transaction.exists():
             return False
-
+        
         return super().create(validated_data)
 
 

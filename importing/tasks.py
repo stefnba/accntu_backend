@@ -4,8 +4,7 @@ from datetime import datetime
 
 from .models import NewImport, NewImportOneAccount
 from .providers.scrapping.utils import wait_for_tan
-from .serializers import ImportSerializer
-from .process.retriever import retrieve_account_transactions
+from .process.retriever import Retriever, retrieve_account_transactions
 
 from .process.process_utils import pusher_trigger
 
@@ -14,8 +13,90 @@ from accounts.models import Account
 from users.models import Settings
 
 
+
 @task(bind=True)
-def initiate_import(self, accounts=[], user=None, upload=None):
+def initiate_import(
+        self,
+        accounts=[],
+        user=None, 
+        upload=None
+    ):
+    """
+
+    """
+
+    task_id = self.request.id
+    nmbr_imported_transactions = 0
+
+    # pusher_trigger(
+    #     task_id,
+    #     'IMPORT_PROCESS',
+    #     { 
+    #         'msg': 'Import process has started ...',
+    #         'progress_push': 10,
+    #     }
+    # )
+
+    accounts = Account.objects.select_related(
+        'user',
+        'provider',
+        'provider__import_details'
+    ).filter(pk__in=accounts)
+    
+    # save new import object, will be completed later once process is complete
+    new_import = NewImport.objects.create(
+        user_id=user,
+    )
+
+    for account in accounts:
+
+        retriever = Retriever(
+            account.user,
+            account,
+            task_id,
+            new_import
+        )
+        
+        if upload:
+            retriever.upload(upload)
+
+        new_transactions = retriever.retrieve_transactions()
+
+        # save transaction to db (# of saved trx is returned)
+        nmbr_imported_transactions += retriever.save(new_transactions)
+
+    # update new_import object if import successful
+    if nmbr_imported_transactions > 0:
+
+        new_import.import_success = True
+        new_import.nmbr_transactions = nmbr_imported_transactions
+        new_import.save()
+
+        # pusher_trigger(
+        #     task_id,
+        #     'IMPORT_SUCCESS',
+        #     { 
+        #         'msg': 'Import has been successful',
+        #         'progressbar': 100,
+        #         'count': nmbr_imported_transactions
+        #     }
+        # )
+
+        return {
+            'transactions': 'to come',
+            'nmbr': nmbr_imported_transactions
+        }
+
+    print('not updated')
+
+    return {
+
+    }
+
+
+
+@task(bind=True)
+def initiate_import_old(self, accounts=[], user=None, upload=None):
     """
     Celery task triggered by view ImportViaAPI in views.py, handles threading of parallel import with calling
     function retrieve_account_transactions as defined in process/retriever.py
