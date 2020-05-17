@@ -137,7 +137,9 @@ class Retriever(object):
             imported_transactions = serializer.save()
             nmbr_imported_transactions = len([trx for trx in imported_transactions if trx is not False])
 
+            # update relevant db entries
             self.update_import_process(nmbr_imported_transactions)
+            self.update_account_meta()
 
             return nmbr_imported_transactions
 
@@ -145,6 +147,18 @@ class Retriever(object):
         print('ImportSerializer not valid')
         print(serializer.errors)
         return 0
+
+
+    def update_account_meta(self):
+        """
+        Update info in Account model for fields like last_import, first_import_success
+        """
+
+        self.account.last_import = self.new_import_one_account.imported_at
+        self.account.first_import_success = True
+        
+        self.account.save()
+
 
 
     def save_import_process(self, new_import):
