@@ -30,14 +30,14 @@ class ImportViaAPI(APIView):
     :POST: Initiate new import process for provided accounts
     """
 
-    def get(self, request):
+    def get(self, request, import_type=None):
         """
         List all importable accounts for given user
         """
         
         accounts = Account.objects.filter(
-                provider__access_type__in=['api']
-            ).values_list('id', flat=True)
+            provider__access_type=import_type
+        ).values_list('id', flat=True)
 
         res = {
             'results': accounts,
@@ -60,7 +60,7 @@ class ImportViaAPI(APIView):
         # TODO remove here
         # accounts = [14]
         # accounts = [18]
-        accounts = [20]
+        accounts = [10, 20]
         user = 1
 
         if accounts and user:
