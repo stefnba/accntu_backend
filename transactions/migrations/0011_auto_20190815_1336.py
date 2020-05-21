@@ -12,10 +12,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='transaction',
-            name='import_upload',
-        ),
+        # migrations.RemoveField(
+        #     model_name='transaction',
+        #     name='import_upload',
+        # ),
         migrations.AddField(
             model_name='transaction',
             name='importing',
