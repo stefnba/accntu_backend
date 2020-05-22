@@ -15,17 +15,24 @@ from .serializers import (
 # Create your views here.
 
 """
-    Transactions
+    Accounts
 """""""""""""""""""""""""""""""""""""""""""""
 
 class AccountList(ListAPIView):
-    " listing all account "
+    """
+    List all account with nested provider info
+    TODO Filter for active accounts only
+    """
     
     queryset = Account.objects.all()
     serializer_class = AccountListSerializer
 
+
+
 class AccountFullList(ListAPIView):
-    " listing all account with full information "
+    """
+    Listing all account with full information
+    """
     
     queryset = Account.objects.all()
     serializer_class = AccountFullListSerializer

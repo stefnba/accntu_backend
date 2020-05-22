@@ -50,6 +50,7 @@ class Account(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=255)
     provider = models.ForeignKey("accounts.Provider", on_delete=models.SET_NULL, blank=True, null=True, related_name='provider_of_account')
+    is_active = models.BooleanField(default=True)
     first_import_success = models.BooleanField(default=False)
     sub_accounts_retrieved = models.BooleanField(default=False)
     last_import = models.DateTimeField(blank=True, null=True)
@@ -85,9 +86,16 @@ class Token_Data(models.Model):
 
 
 class Sub_Account(models.Model):
+    
+    SUB_ACCOUNT_TYPE_CHOICES = (
+        ('card','Card'), 
+        ('account','Account')
+    )
+
     account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True, related_name='sub_account')
     provider_subaccount_id = models.CharField(max_length=255, blank=True, null=True)
     provider_subaccount_name = models.CharField(max_length=255, blank=True, null=True)
+    sub_account_type = models.CharField(max_length=255, choices=SUB_ACCOUNT_TYPE_CHOICES)
 
 
     def __str__(self):

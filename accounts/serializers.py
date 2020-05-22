@@ -5,7 +5,7 @@ from .models import (
     Provider
 )
 
-class ProviderSerializer(serializers.ModelSerializer):
+class ProviderListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Provider
         fields = ('key', 'provider', 'access_type', 'logo')
@@ -14,7 +14,7 @@ class ProviderSerializer(serializers.ModelSerializer):
 class AccountListSerializer(serializers.ModelSerializer):
     " List all Accounts for user "
 
-    provider = ProviderSerializer()
+    provider = ProviderListSerializer()
     
     class Meta:
         model = Account
@@ -24,7 +24,7 @@ class AccountListSerializer(serializers.ModelSerializer):
 class AccountFullListSerializer(serializers.ModelSerializer):
     " List all Accounts for user with all fields "
 
-    provider = ProviderSerializer()
+    provider = ProviderListSerializer()
     
     class Meta:
         model = Account
