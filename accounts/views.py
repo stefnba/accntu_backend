@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework.generics import (
-    ListAPIView
+    ListAPIView,
+    RetrieveUpdateAPIView
 )
 
 from .models import (
@@ -9,7 +10,8 @@ from .models import (
 
 from .serializers import (
     AccountListSerializer,
-    AccountFullListSerializer
+    AccountFullListSerializer,
+    AccountRetrieveUpdateSerializer
 )
 
 # Create your views here.
@@ -36,3 +38,13 @@ class AccountFullList(ListAPIView):
     
     queryset = Account.objects.all()
     serializer_class = AccountFullListSerializer
+
+
+class AccountRetrieveUpdate(RetrieveUpdateAPIView):
+    """
+    Retrieve and update single account
+    """
+    
+    queryset = Account.objects.all()
+    serializer_class = AccountRetrieveUpdateSerializer
+    lookup_field = 'id'

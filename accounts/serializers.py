@@ -8,7 +8,7 @@ from .models import (
 class ProviderListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Provider
-        fields = ('key', 'provider', 'access_type', 'logo')
+        fields = ('key', 'provider', 'access_type', 'logo', 'provider_type', 'currency', 'country')
 
 
 class AccountListSerializer(serializers.ModelSerializer):
@@ -19,6 +19,31 @@ class AccountListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ('title','id', 'provider')
+
+
+class AccountRetrieveUpdateSerializer(serializers.ModelSerializer):
+    """
+    Retrieve and update single account
+    """
+
+    provider = ProviderListSerializer(read_only=True)
+
+    class Meta:
+        model = Account
+        fields = (
+            'title',
+            'last_import',
+            'first_import_success',
+            'login',
+            'login_sec',
+            'pin',
+            'provider',
+        )
+
+        read_only_fields = (
+            'last_import',
+            'first_import_success',
+        )
 
 
 class AccountFullListSerializer(serializers.ModelSerializer):
