@@ -30,6 +30,7 @@ class Provider(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     access_type = models.CharField(max_length=255, choices=ACCESS_TYPE_CHOICES)
     provider_type = models.CharField(max_length=255, choices=PROVIDER_TYPE_CHOICES)
+    login_required = models.BooleanField(default=False)
     currency = models.CharField(max_length=3)  
     import_details = models.ForeignKey('importing.ImportDetails', on_delete=models.SET_NULL, blank=True, null=True, related_name='import_details')
 
