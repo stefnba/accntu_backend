@@ -100,3 +100,6 @@ importing/imports/
 # vs code
 .vscode
 
+# Bash Scripts
+*.sh
+

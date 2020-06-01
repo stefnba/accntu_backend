@@ -100,7 +100,7 @@ class ImportViaAPIRunning(APIView):
             'meta': task.info
         }
 
-        return Response(res, status=status.HTTP_201_CREATED)
+        return Response(res, status=status.HTTP_200_OK)
 
 
 class ImportViaAPITwoFactorSubmitTAN(APIView):

@@ -31,7 +31,7 @@ class AccountListSerializer(serializers.ModelSerializer):
         fields = ('title','id', 'provider')
 
 
-class AccountRetrieveUpdateSerializer(serializers.ModelSerializer):
+class AccountCreateRetrieveUpdateSerializer(serializers.ModelSerializer):
     """
     Retrieve and update single account
     """
@@ -42,6 +42,7 @@ class AccountRetrieveUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = (
+            'id',
             'title',
             'last_import',
             'first_import_success',

@@ -81,10 +81,22 @@ class BaseApiAccess(object):
     def get_accounts(self):
         """
         Retrieves basic account information
+        :return: list of accounts as returned by API
         """
 
         return self._do_request(GET, self.accounts_endpoint)
 
+
+    def save_accounts_for_sub_accounts_import(self):
+        """
+        Get Sub-accounts of account, parse them via self.parse_sub_accounts and save them to db
+        :return: list of accounts as saved to db
+        """
+
+        sub_accounts = self.get_accounts()
+        parsed_sub_accounts = self.parse_sub_accounts(sub_accounts)
+
+        return parsed_sub_accounts
 
 
 

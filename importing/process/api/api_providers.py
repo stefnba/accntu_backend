@@ -167,6 +167,24 @@ class N26_API(BaseApiAccess):
         return tokens
 
 
+    def parse_sub_accounts(self, sub_accounts):
+        """
+        :return: parsed sub accounts which are ready to be imported to db
+        """
+
+        parsed = []
+        sub_accounts = sub_accounts['spaces']
+        for sub_account in sub_accounts:
+            parsed.append({
+                'provider_subaccount_id': sub_account['accountId'],
+                'provider_subaccount_name': sub_account['name'],
+                'sub_account_type': 'account'
+            })
+
+        return parsed
+
+    
+
 """
 Export provider classes
 """

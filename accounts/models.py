@@ -61,13 +61,15 @@ class Account(models.Model):
     login_sec = models.CharField(max_length=255, blank=True, null=True)
     pin = models.CharField(max_length=255, blank=True, null=True)
 
+    class Meta:
+        ordering = ['title']
     
     def __str__(self):
         return self.title
 
 
 class Token_Data(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.SET_NULL, blank=True, null=True)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE, blank=True, null=True)
     access_token = models.TextField()
     refresh_token = models.TextField()
     token_type = models.CharField(max_length=255)
